@@ -75,8 +75,10 @@ from src.config import load_config, RANDOM_STATE
 from src.data_loader import load_timeseries, load_query
 
 cfg = load_config()
-HORIZON = cfg['timeseries']['forecast_horizon']
-INPUT_SIZE = cfg['timeseries']['input_size']
+
+# Horizont und Input Size direkt definieren (oder in config.yaml ergänzen)
+HORIZON = 14
+INPUT_SIZE = 28
 ```
 
 ### Schritt 2: Daten laden & bereinigen

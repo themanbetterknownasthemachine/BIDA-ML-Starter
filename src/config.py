@@ -1,6 +1,5 @@
 """Configuration loader for BIDA ML Starter."""
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -36,21 +35,6 @@ def get_snowflake_config(cfg: dict | None = None) -> dict[str, str]:
     """Extract Snowflake connection params from config."""
     cfg = cfg or load_config()
     return cfg.get("snowflake", {})
-
-
-def get_timeseries_config(cfg: dict | None = None) -> dict[str, Any]:
-    """Extract time-series specific config."""
-    cfg = cfg or load_config()
-    return cfg.get("timeseries", {})
-
-
-def get_model_config(model_name: str, cfg: dict | None = None) -> dict[str, Any]:
-    """Get config for a specific model (lightgbm, nhits, baseline)."""
-    cfg = cfg or load_config()
-    models = cfg.get("models", {})
-    if model_name not in models:
-        raise KeyError(f"Model '{model_name}' not found in config. Available: {list(models.keys())}")
-    return models[model_name]
 
 
 # Convenience: project-wide random state

@@ -1,126 +1,200 @@
-"""Data loading utilities — works in Snowflake Notebooks and on VM/local."""
+"""Data loader — connects to Snowflake automatically.
 
-from __future__ import annotations
+Detects environment and chooses the right connection method:
+- Snowflake Container Runtime: get_active_session() (automatic)
+- VM/lokal: reads .env and connects via one of three methods:
+    1. External Browser (SSO) — easiest for teams, set SF_AUTHENTICATOR=externalbrowser
+    2. Key-Pair — best for automation/VMs, set SF_PRIVATE_KEY_PATH
+    3. Password + MFA — fallback, set SF_PASSWORD (will prompt for MFA if required)
+"""
 
+import os
 import pandas as pd
 
-from src.config import load_config
-
-
-# ---------------------------------------------------------------------------
-# Snowflake session helper
-# ---------------------------------------------------------------------------
 
 def get_session():
-    """Get a Snowflake session.
+    """Get a Snowflake session. Auto-detects environment.
 
-    In a Snowflake Notebook the session is provided automatically.
-    On a VM/local machine we build one from environment variables.
+    In Snowflake Container Runtime: uses get_active_session().
+    In VM/lokal: reads credentials from .env file.
+
+    Returns:
+        snowflake.snowpark.Session
     """
+    # Try Snowflake Container Runtime first
     try:
         from snowflake.snowpark.context import get_active_session
-        return get_active_session()
+        session = get_active_session()
+        return session
     except Exception:
         pass
 
-    # Fallback: build session from .env (VM / local)
-    import os
+    # Fall back to local connection via .env
     from dotenv import load_dotenv
+    load_dotenv()
+
+    account = os.getenv("SF_ACCOUNT")
+    user = os.getenv("SF_USER")
+    role = os.getenv("SF_ROLE", "ROLE_DS")
+    warehouse = os.getenv("SF_WAREHOUSE", "ML_WH")
+    database = os.getenv("SF_DATABASE", "ML_DB")
+    schema = os.getenv("SF_SCHEMA", "DATA")
+    authenticator = os.getenv("SF_AUTHENTICATOR", "").lower()
+    private_key_path = os.getenv("SF_PRIVATE_KEY_PATH", "")
+
+    if not account or not user:
+        raise ValueError("SF_ACCOUNT and SF_USER must be set in .env")
+
     from snowflake.snowpark import Session
 
-    load_dotenv()
-    connection_params = {
-        "account": os.getenv("SF_ACCOUNT"),
-        "user": os.getenv("SF_USER"),
-        "password": os.getenv("SF_PASSWORD", ""),
-        "private_key_file": os.getenv("SF_PRIVATE_KEY_PATH", ""),
-        "role": os.getenv("SF_ROLE", "ROLE_DS"),
-        "warehouse": os.getenv("SF_WAREHOUSE", "ML_WH"),
-        "database": os.getenv("SF_DATABASE", "ML_DB"),
-        "schema": os.getenv("SF_SCHEMA", "DATA"),
-    }
-    # Remove empty values
-    connection_params = {k: v for k, v in connection_params.items() if v}
-    return Session.builder.configs(connection_params).create()
+    # Method 1: External Browser (SSO) — easiest for teams
+    if authenticator == "externalbrowser":
+        session = Session.builder.configs({
+            "account": account,
+            "user": user,
+            "authenticator": "externalbrowser",
+            "role": role,
+            "warehouse": warehouse,
+            "database": database,
+            "schema": schema,
+        }).create()
+        return session
+
+    # Method 2: Key-Pair — best for automation
+    if private_key_path:
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+
+        key_path = os.path.expanduser(private_key_path)
+        with open(key_path, "rb") as f:
+            private_key = serialization.load_pem_private_key(
+                f.read(), password=None, backend=default_backend()
+            )
+        private_key_bytes = private_key.private_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        session = Session.builder.configs({
+            "account": account,
+            "user": user,
+            "private_key": private_key_bytes,
+            "role": role,
+            "warehouse": warehouse,
+            "database": database,
+            "schema": schema,
+        }).create()
+        return session
+
+    # Method 3: Password (may trigger MFA prompt)
+    password = os.getenv("SF_PASSWORD")
+    if not password:
+        raise ValueError(
+            "No auth method configured in .env. Set one of:\n"
+            "  SF_AUTHENTICATOR=externalbrowser  (easiest)\n"
+            "  SF_PRIVATE_KEY_PATH=~/.snowflake/snowflake_key.p8  (automation)\n"
+            "  SF_PASSWORD=...  (may require MFA)"
+        )
+
+    session = Session.builder.configs({
+        "account": account,
+        "user": user,
+        "password": password,
+        "role": role,
+        "warehouse": warehouse,
+        "database": database,
+        "schema": schema,
+    }).create()
+    return session
 
 
-# ---------------------------------------------------------------------------
-# Data loading
-# ---------------------------------------------------------------------------
-
-def load_table(table_name: str | None = None, session=None) -> pd.DataFrame:
-    """Load a full table from Snowflake as pandas DataFrame.
+def load_query(query: str) -> pd.DataFrame:
+    """Run a SQL query and return results as DataFrame.
 
     Args:
-        table_name: Fully qualified table name. If None, reads from config.
-        session: Optional Snowpark session. Auto-detected if None.
-
-    Returns:
-        pandas DataFrame with all rows.
-    """
-    if table_name is None:
-        cfg = load_config()
-        table_name = cfg["tables"]["training_data"]
-
-    session = session or get_session()
-    df = session.table(table_name).to_pandas()
-
-    # Snowflake returns UPPERCASE columns — normalize to lowercase
-    df.columns = [c.lower() for c in df.columns]
-    return df
-
-
-def load_query(sql: str, session=None) -> pd.DataFrame:
-    """Execute a SQL query and return result as pandas DataFrame.
-
-    Args:
-        sql: SQL query string.
-        session: Optional Snowpark session.
+        query: SQL query string.
 
     Returns:
         pandas DataFrame with query results.
     """
-    session = session or get_session()
-    df = session.sql(sql).to_pandas()
+    session = get_session()
+    return session.sql(query).to_pandas()
+
+
+def load_table(table_name: str, limit: int = None) -> pd.DataFrame:
+    """Load a full table as DataFrame.
+
+    Args:
+        table_name: Fully qualified table name (e.g. 'ML_DB.DATA.MY_TABLE').
+        limit: Optional row limit.
+
+    Returns:
+        pandas DataFrame.
+    """
+    query = f"SELECT * FROM {table_name}"
+    if limit:
+        query += f" LIMIT {limit}"
+    return load_query(query)
+
+
+def load_timeseries(table_name: str = None, unique_id: str = None) -> pd.DataFrame:
+    """Load time series data in [unique_id, ds, y] format.
+
+    Args:
+        table_name: Table to load. If None, reads from config.yaml.
+        unique_id: Filter to a specific series (e.g. 'kategorie_a').
+
+    Returns:
+        pandas DataFrame with columns unique_id, ds, y.
+    """
+    if table_name is None:
+        from src.config import load_config
+        cfg = load_config()
+        table_name = cfg.get("tables", {}).get("training_data")
+        if not table_name:
+            raise ValueError("No table configured. Set tables.training_data in configs/config.yaml")
+
+    query = f"SELECT * FROM {table_name}"
+    if unique_id:
+        query += f" WHERE unique_id = '{unique_id}'"
+    query += " ORDER BY unique_id, ds"
+
+    df = load_query(query)
     df.columns = [c.lower() for c in df.columns]
     return df
 
 
-def load_timeseries(
-    table_name: str | None = None,
-    unique_id: str | None = None,
-    min_date: str | None = None,
-    session=None,
-) -> pd.DataFrame:
-    """Load time-series data with optional filtering.
+def write_to_snowflake(
+    df: pd.DataFrame,
+    table_name: str,
+    database: str = None,
+    schema: str = None,
+    overwrite: bool = False,
+) -> None:
+    """Write a DataFrame to Snowflake.
 
     Args:
-        table_name: Source table. Reads from config if None.
-        unique_id: Filter to a specific series (e.g. 'kategorie_a').
-        min_date: Only load data from this date onwards (e.g. '2022-01-01').
-        session: Optional Snowpark session.
-
-    Returns:
-        pandas DataFrame with columns [unique_id, ds, y, ...].
+        df: pandas DataFrame to write.
+        table_name: Target table name.
+        database: Database (default: from config).
+        schema: Schema (default: results_schema from config).
+        overwrite: If True, replace table. If False, append.
     """
-    cfg = load_config()
-    ts = cfg["timeseries"]
+    if database is None or schema is None:
+        from src.config import load_config
+        cfg = load_config()
+        sf_cfg = cfg.get("snowflake", {})
+        database = database or sf_cfg.get("database", "ML_DB")
+        schema = schema or sf_cfg.get("results_schema", "INFERENCE")
 
-    if table_name is None:
-        table_name = cfg["tables"]["training_data"]
-
-    where_clauses = []
-    if unique_id:
-        where_clauses.append(f"{ts['id_column']} = '{unique_id}'")
-    if min_date:
-        where_clauses.append(f"{ts['time_column']} >= '{min_date}'")
-
-    where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-
-    sql = f"""
-        SELECT {ts['id_column']}, {ts['time_column']}, {ts['target_column']}
-        FROM {table_name}
-        {where_sql}
-        ORDER BY {ts['id_column']}, {ts['time_column']}
-    """
-    return load_query(sql, session=session)
+    session = get_session()
+    session.write_pandas(
+        df,
+        table_name=table_name,
+        database=database,
+        schema=schema,
+        auto_create_table=True,
+        overwrite=overwrite,
+    )
+    mode = "überschrieben" if overwrite else "angehängt"
+    print(f"{len(df)} Zeilen nach {database}.{schema}.{table_name} {mode}.")
