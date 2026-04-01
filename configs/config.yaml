@@ -1,0 +1,77 @@
+# =============================================================================
+# BIDA ML Starter — Zentrale Konfiguration
+# =============================================================================
+# Alle Parameter an einem Ort. Keine Hardcodes in Notebooks oder src/.
+# Laden mit: from src.config import load_config
+#
+# ANPASSEN: Tabellennamen, Spaltennamen und Parameter an den eigenen
+# Use Case anpassen. Die Standardwerte dienen als Beispiel.
+# =============================================================================
+
+project:
+  name: "BIDA ML Starter"
+  version: "0.1.0"
+  random_state: 42
+
+snowflake:
+  database: "ML_DB"
+  schema: "DATA"
+  warehouse: "ML_WH"
+  results_schema: "INFERENCE"
+
+# Tabellennamen (anpassen an den eigenen Use Case)
+tables:
+  training_data: "ML_DB.DATA.FCT_DAILY_SALES"       # Haupttabelle für Training
+  results: "ML_DB.INFERENCE.ML_RESULTS"              # Ergebnisse (Predictions)
+  model_metrics: "ML_DB.INFERENCE.MODEL_METRICS"     # Metriken-Log
+
+# Zeitreihen-Konfiguration (nur relevant für 02_forecasting)
+timeseries:
+  id_column: "unique_id"        # Spalte für Serien-ID
+  time_column: "ds"             # Spalte für Zeitstempel
+  target_column: "y"            # Spalte für Zielwert
+  frequency: "D"                # D=täglich, W=wöchentlich, M=monatlich
+  forecast_horizon: 14          # Anzahl Perioden voraus
+  input_size: 28                # Lookback-Fenster für N-HiTS
+
+# Feature Engineering
+features:
+  add_day_of_week: true
+  add_month: true
+  add_is_weekend: true
+  add_holidays: true
+  holiday_country: "CH"
+  holiday_province: "LU"
+
+# Modelle
+models:
+  baseline:
+    type: "naive"               # naive, seasonal_naive, mean, most_frequent
+    seasonal_period: 7
+
+  lightgbm:
+    n_estimators: 500
+    learning_rate: 0.05
+    max_depth: -1
+    num_leaves: 31
+    random_state: 42
+
+  nhits:
+    input_size: 28
+    horizon: 14
+    max_steps: 500
+    learning_rate: 0.001
+    batch_size: 32
+
+# Evaluation
+evaluation:
+  metrics: ["mae", "rmse", "mape"]
+  test_size_days: 14            # Für Zeitreihen: letzte N Tage als Test-Set
+  test_size_ratio: 0.2          # Für Klassifikation/Regression: 80/20 Split
+  cv_folds: 5
+
+# Logging
+logging:
+  level: "INFO"
+  save_plots: true
+  plots_dir: "reports/figures"

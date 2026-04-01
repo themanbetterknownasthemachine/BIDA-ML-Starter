@@ -1,0 +1,31 @@
+# =============================================================================
+# BIDA ML Starter — Snowflake Container Runtime Dependencies
+# =============================================================================
+# Nur Packages die NICHT im Snowflake Base Image enthalten sind.
+# pandas, numpy, scikit-learn, pytorch, lightgbm, xgboost → bereits vorinstalliert.
+#
+# Installation: pip install -r requirements-snowflake.txt
+# =============================================================================
+
+# Time Series (nicht im Base Image)
+neuralforecast==1.7.5
+statsforecast==2.0.1
+mlforecast==0.13.4
+
+# Hyperparameter Tuning
+optuna==4.1.0
+
+# Explainability
+shap==0.46.0
+
+# Imbalanced Data
+imbalanced-learn==0.12.4
+
+# Utilities
+holidays==0.63
+loguru==0.7.3
+pyyaml==6.0.2
+category_encoders==2.6.4
+
+# Data Quality (optional)
+# great-expectations==1.3.0

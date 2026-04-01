@@ -1,0 +1,63 @@
+# =============================================================================
+# BIDA ML Starter — .gitignore
+# =============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Virtual environments
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment & Secrets
+.env
+
+# Data (zu gross für Git)
+data/raw/*
+data/processed/*
+data/external/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+
+# Trained Models (zu gross für Git)
+models/*
+!models/.gitkeep
+
+# Reports / Figures (optional tracken)
+# reports/figures/*
+# !reports/figures/.gitkeep
+
+# uv Lock (VM-Umgebung — committen!)
+# uv.lock
+
+# Logs
+*.log
+logs/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
