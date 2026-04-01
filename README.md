@@ -1,6 +1,6 @@
-# 🧠 BIDA ML Starter — Pistor
+# 🧠 BIDA ML Starter Projekt — Pistor AG
 
-Standardisiertes ML-Template für das Pistor BI & Data Analytics Team.
+Standardisiertes ML-Template für das Pistor AG BI & Data Analytics Team.
 Einsetzbar für Forecasting, Klassifikation, Regression und weitere ML-Aufgaben.
 
 ## 🌐 Ein Projekt, drei Umgebungen
