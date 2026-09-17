@@ -191,7 +191,6 @@ und wird nicht kopiert; Hooks, Security-Rules und Verifier kommen aus dem Templa
 ## Konventionen
 
 - Notebooks: Deutsch (Markdown). Python-Code, SQL und Commits: Englisch.
-- Keine Emojis im Projekt. Deutsche Texte mit ä, ö, ü, ohne Eszett und ohne Gedankenstriche.
 
 ## Team
 

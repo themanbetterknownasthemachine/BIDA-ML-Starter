@@ -113,8 +113,6 @@ conda env create -f environment.yml && conda activate bida-ml
 - **Python-Code**: Englisch (Funktionsnamen, Variablen, Docstrings, Kommentare)
 - **SQL**: Englisch, Objektnamen UPPER_CASE
 - **Commit Messages**: Englisch
-- Keine Emojis im Projekt (Doku, Notebooks, Code, Commits).
-- Deutsche Texte mit echten Umlauten (ä, ö, ü), Schweizer Schreibweise ohne Eszett (ss), keine Gedankenstriche.
 
 ## Workflow-Regeln
 
@@ -167,4 +165,4 @@ conda env create -f environment.yml && conda activate bida-ml
 - GPU: NeuralForecast/PyTorch nutzen CUDA automatisch; mit `torch.cuda.is_available()` prüfen.
 - `.env` und Private Keys nie lesen oder ausgeben.
 - Ergebnisse immer nach PROD_ML schreiben; nichts nach PROD_DATALAKE / PROD_CONSUMPTION.
-- Notebook-Text auf Deutsch, Code auf Englisch, keine Emojis.
+- Notebook-Text auf Deutsch, Code auf Englisch.
