@@ -58,7 +58,8 @@ models/*
 # Logs
 *.log
 logs/
-lightning_logs/      # NeuralForecast / PyTorch Lightning Trainingslogs
+# NeuralForecast / PyTorch Lightning Trainingslogs
+lightning_logs/
 .ruff_cache/
 
 # pytest
