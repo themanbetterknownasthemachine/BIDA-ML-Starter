@@ -1,10 +1,10 @@
 -- =============================================================================
--- BIDA ML Starter - Berechtigungen fuer die Rolle ML_DEVELOPER (Referenz)
+-- BIDA ML Starter - Berechtigungen für die Rolle ML_DEVELOPER (Referenz)
 -- =============================================================================
 -- Die ML-Datenbank (Schemas INFERENCE, REGISTRY, MONITORING) wird vom DWH-Team
 -- verwaltet: DEV_ML heute, PROD_ML nach dem Deployment. Dieses Script dokumentiert,
--- welche Rechte ein ML-Entwickler braucht. Fuer DEV_ML PROD_ML durch DEV_ML ersetzen
--- (SET db = 'DEV_ML' waere die Alternative). Nur ausfuehren (Admin), wenn ein neuer
+-- welche Rechte ein ML-Entwickler braucht. Für DEV_ML PROD_ML durch DEV_ML ersetzen
+-- (SET db = 'DEV_ML' wäre die Alternative). Nur ausführen (Admin), wenn ein neuer
 -- User oder ein neues Quellschema dazukommt.
 -- =============================================================================
 
@@ -49,5 +49,5 @@ GRANT SELECT ON FUTURE VIEWS  IN SCHEMA PROD_DATALAKE.MSACCESS TO ROLE ML_DEVELO
 -- 5. Key-Pair Auth pro User (Public Key aus ~/.snowflake/rsa_key.pub, ohne BEGIN/END Zeilen)
 -- ALTER USER toni_buehlmann SET RSA_PUBLIC_KEY='MIIBIjANBgkqhk...';
 
--- 6. Pruefen
+-- 6. Prüfen
 -- SHOW GRANTS TO ROLE ML_DEVELOPER;

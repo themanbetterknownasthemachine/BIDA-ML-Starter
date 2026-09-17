@@ -1,18 +1,18 @@
 ---
 name: classification
-description: Code fuer Klassifikation im BIDA ML Starter (sklearn Pipelines, LightGBM/XGBoost, stratified CV, Tuning, Evaluation mit ROC/PR, SHAP, Schreiben nach PROD_ML). Nutzen, wenn der User einen Schritt aus notebooks/03_classification.ipynb umsetzt.
+description: Code für Klassifikation im BIDA ML Starter (sklearn Pipelines, LightGBM/XGBoost, stratified CV, Tuning, Evaluation mit ROC/PR, SHAP, Schreiben nach PROD_ML). Nutzen, wenn der User einen Schritt aus notebooks/03_classification.ipynb umsetzt.
 ---
 
 # Classification Skill
 
 Der User folgt der Anleitung in `notebooks/03_classification.ipynb` (11 Schritte) und braucht Code
-fuer einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users geschrieben.
+für einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users geschrieben.
 
 ## Kontext
 
 - **Daten:** Tabelle oder View aus `PROD_DATALAKE` (voll qualifizierter Name in `configs/config.yaml`).
 - **Ziel:** Predictions nach `PROD_ML.INFERENCE`, Metriken nach `PROD_ML.MONITORING`.
-- **src/ enthaelt nur** `config.py` und `data_loader.py`; alles andere wird im Notebook geschrieben.
+- **src/ enthält nur** `config.py` und `data_loader.py`; alles andere wird im Notebook geschrieben.
 
 ## Code-Referenz nach Schritt
 
@@ -167,7 +167,7 @@ write_to_snowflake(metrics, "MODEL_EVALUATION_LOG", schema=cfg["snowflake"]["sch
 ## Regeln
 
 - IMMER stratified splitten (`stratify=y`) und `StratifiedKFold` nutzen.
-- Klassenbalance pruefen; bei Imbalance `class_weight="balanced"` oder SMOTE (`imbalanced-learn`) vorschlagen.
+- Klassenbalance prüfen; bei Imbalance `class_weight="balanced"` oder SMOTE (`imbalanced-learn`) vorschlagen.
 - Pipeline nutzen (Preprocessing + Modell zusammen), nie getrennt fitten.
 - ROC-AUC und PR-AUC immer beide zeigen.
 - Baseline (`DummyClassifier`) ist Pflicht.

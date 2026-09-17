@@ -1,18 +1,18 @@
 ---
 name: regression
-description: Code fuer Regression im BIDA ML Starter (sklearn Pipelines, LightGBM/XGBoost, Optuna, Residuen-Analyse, SHAP, Schreiben nach PROD_ML). Nutzen, wenn der User einen Schritt aus notebooks/04_regression.ipynb umsetzt.
+description: Code für Regression im BIDA ML Starter (sklearn Pipelines, LightGBM/XGBoost, Optuna, Residuen-Analyse, SHAP, Schreiben nach PROD_ML). Nutzen, wenn der User einen Schritt aus notebooks/04_regression.ipynb umsetzt.
 ---
 
 # Regression Skill
 
 Der User folgt der Anleitung in `notebooks/04_regression.ipynb` (16 Schritte) und braucht Code
-fuer einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users geschrieben.
+für einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users geschrieben.
 
 ## Kontext
 
 - **Daten:** Tabelle oder View aus `PROD_DATALAKE` (voll qualifizierter Name in `configs/config.yaml`).
 - **Ziel:** Predictions nach `PROD_ML.INFERENCE`, Metriken nach `PROD_ML.MONITORING`.
-- **src/ enthaelt nur** `config.py` und `data_loader.py`; alles andere wird im Notebook geschrieben.
+- **src/ enthält nur** `config.py` und `data_loader.py`; alles andere wird im Notebook geschrieben.
 
 ## Code-Referenz nach Schritt
 

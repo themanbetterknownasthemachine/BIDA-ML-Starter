@@ -42,7 +42,7 @@ dependencies = [
     "pyyaml>=6.0",
 ]
 
-# PyTorch-Variante waehlen:
+# PyTorch-Variante wählen:
 #   uv sync --extra cpu   -> Laptop ohne GPU, VM (kleiner Download)
 #   uv sync --extra gpu   -> Lenovo Notebook mit NVIDIA GPU (CUDA 13.0, Treiber >= 580)
 #   uv sync               -> PyPI-Standard (Windows: CPU, Linux: CUDA)
@@ -64,7 +64,7 @@ dev = [
 # Firmen-Proxy mit eigenem Zertifikat: Zertifikate aus dem Windows-Store verwenden
 system-certs = true
 conflicts = [[{ extra = "cpu" }, { extra = "gpu" }]]
-# numba braucht ein aktuelles llvmlite; ohne Constraint waehlt der Resolver ein altes numba ohne Python-3.12-Wheel
+# numba braucht ein aktuelles llvmlite; ohne Constraint wählt der Resolver ein altes numba ohne Python-3.12-Wheel
 constraint-dependencies = ["numba>=0.61"]
 
 [tool.uv.sources]
@@ -78,7 +78,7 @@ name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
-# Aeltere NVIDIA-Treiber (< 580): URL auf .../whl/cu126 aendern und "uv lock" ausfuehren
+# Ältere NVIDIA-Treiber (< 580): URL auf .../whl/cu126 ändern und "uv lock" ausführen
 [[tool.uv.index]]
 name = "pytorch-cu130"
 url = "https://download.pytorch.org/whl/cu130"
@@ -88,7 +88,7 @@ explicit = true
 line-length = 100
 target-version = "py312"
 extend-exclude = ["notebooks"]
-force-exclude = true   # Ausschluss gilt auch, wenn pre-commit Dateien explizit uebergibt
+force-exclude = true   # Ausschluss gilt auch, wenn pre-commit Dateien explizit übergibt
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "B", "UP"]

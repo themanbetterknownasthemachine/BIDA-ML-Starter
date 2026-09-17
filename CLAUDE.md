@@ -1,13 +1,13 @@
 # CLAUDE.md - BIDA ML Starter
 
-## Projekt-Ueberblick
+## Projekt-Überblick
 
-Pistor BIDA ML Starter: Template fuer reproduzierbare Machine-Learning-Projekte
+Pistor BIDA ML Starter: Template für reproduzierbare Machine-Learning-Projekte
 (Forecasting, Klassifikation, Regression) im BI & Data Analytics Team.
 
 - Gearbeitet wird **lokal** (Windows-Notebook, optional NVIDIA-GPU) oder auf einer Linux-VM via Remote-SSH,
   in VS Code mit Claude Code.
-- **Snowflake** ist Datenquelle (`PROD_DATALAKE`) und Ziel fuer alle Ergebnisse (`PROD_ML`).
+- **Snowflake** ist Datenquelle (`PROD_DATALAKE`) und Ziel für alle Ergebnisse (`PROD_ML`).
 - Environment mit `uv` (empfohlen) oder `conda`; beide installieren dieselben Versionen.
 
 ## Projektstruktur
@@ -15,7 +15,7 @@ Pistor BIDA ML Starter: Template fuer reproduzierbare Machine-Learning-Projekte
 ```
 BIDA-ML-Starter/
 ├── CLAUDE.md                     -> Diese Datei
-├── README.md                     -> Setup-Anleitung fuer das Team
+├── README.md                     -> Setup-Anleitung für das Team
 ├── pyproject.toml / uv.lock      -> Dependencies (uv); Extras: cpu, gpu
 ├── environment.yml / requirements.txt -> Conda-Variante (requirements.txt aus uv.lock exportiert)
 ├── .python-version               -> 3.12
@@ -28,7 +28,7 @@ BIDA-ML-Starter/
 │   ├── hooks/                    -> protect-files.sh: blockt Credential-Zugriff und destruktives SQL
 │   └── agents/                   -> code-reviewer, security-reviewer (read-only)
 ├── configs/config.yaml           -> Zentrale Konfiguration (Snowflake-Ziel, Quelltabellen, Seeds)
-├── sql/01_ml_developer_grants.sql -> Berechtigungen der Rolle ML_DEVELOPER (Referenz fuer Admins)
+├── sql/01_ml_developer_grants.sql -> Berechtigungen der Rolle ML_DEVELOPER (Referenz für Admins)
 ├── notebooks/
 │   ├── 00_environment_check.ipynb -> Smoke-Test (mit Code)
 │   ├── 01_data_exploration.ipynb  -> EDA (nur Anleitung, 8 Schritte)
@@ -51,34 +51,34 @@ BIDA-ML-Starter/
 |---------|--------|-------|
 | Quelle (nur lesen) | `PROD_DATALAKE.<QUELLE>.PSA_*` und `*_90` Views | Historisierte Rohdaten, `_90` = rollierendes 90-Tage-Fenster |
 | Ziel | `PROD_ML.INFERENCE` | Forecasts / Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
-| Ziel | `PROD_ML.REGISTRY` | Modell-Laeufe, Parameter, Deployment (`MODEL_RUNS`, `MODEL_COEFFICIENTS`, `MODEL_DEPLOYMENT`) |
+| Ziel | `PROD_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment (`MODEL_RUNS`, `MODEL_COEFFICIENTS`, `MODEL_DEPLOYMENT`) |
 | Ziel | `PROD_ML.MONITORING` | Metriken und DQ-Checks (`MODEL_EVALUATION_LOG`, `DQ_CHECK_LOG`, `V_FORECAST_VS_ACTUAL`) |
 
 - Rolle `ML_DEVELOPER`, Warehouse `CONSUMER` (Defaults in `configs/config.yaml` und `.env.example`).
 - **Umgebungen (DEV / INT / PROD):** Einziger Schalter ist `ML_ENV` in `.env`. `configs/config.yaml`
-  enthaelt Vorlagen mit `{env}` (`{env}_ML`, `{env}_DATALAKE...`), die `load_config()` aufloest.
+  enthält Vorlagen mit `{env}` (`{env}_ML`, `{env}_DATALAKE...`), die `load_config()` auflöst.
   Auf Laptops immer `DEV` (heute existiert nur `DEV_ML`; `PROD_ML` kommt mit dem Deployment).
   Nie `DEV_ML` oder `PROD_ML` fest in Code, Config oder Notebooks schreiben; `PROD_ML` in dieser
   Datei meint "die ML-Datenbank der jeweiligen Umgebung".
 - `PROD_ML` ist bewusst vom Data-Vault-Modell getrennt. Aus dem Notebook wird **nur nach PROD_ML** geschrieben.
-  Der Rueckfluss ins DWH (`PROD_LANDING.ML` -> `PROD_DATALAKE.ML` -> `PROD_CONSUMPTION`) und Power BI liegen beim DWH-Team.
+  Der Rückfluss ins DWH (`PROD_LANDING.ML` -> `PROD_DATALAKE.ML` -> `PROD_CONSUMPTION`) und Power BI liegen beim DWH-Team.
 - Kein Schreiben nach `PROD_DATALAKE`, `PROD_LANDING` oder `PROD_CONSUMPTION`.
 
 ## Konzept
 
 ### Notebooks = Anleitungen (nur Text)
-- `01_` bis `04_` enthalten keine Code-Zellen, nur eine Schritt-fuer-Schritt-Anleitung (Deutsch).
+- `01_` bis `04_` enthalten keine Code-Zellen, nur eine Schritt-für-Schritt-Anleitung (Deutsch).
 - Der Data Scientist legt ein eigenes Arbeits-Notebook an, liest die Anleitung und fragt Claude Code
-  nach dem Code fuer den jeweiligen Schritt.
-- Ausnahme: `00_environment_check.ipynb` enthaelt fertigen Code.
+  nach dem Code für den jeweiligen Schritt.
+- Ausnahme: `00_environment_check.ipynb` enthält fertigen Code.
 
-### Skills = Code-Referenz fuer Claude
-- `.claude/skills/forecasting`, `classification`, `regression` enthalten den Code fuer alle Schritte
-  des jeweiligen Notebooks. Claude laedt sie automatisch, wenn das Thema passt (`/forecasting` erzwingt es).
+### Skills = Code-Referenz für Claude
+- `.claude/skills/forecasting`, `classification`, `regression` enthalten den Code für alle Schritte
+  des jeweiligen Notebooks. Claude lädt sie automatisch, wenn das Thema passt (`/forecasting` erzwingt es).
 
 ### src/ = Minimale Infrastruktur
 - Nur `config.py` und `data_loader.py`. Features, Evaluation, Plots und Modeling entstehen im Notebook.
-- Wiederverwendbare Funktionen koennen spaeter nach `src/` wandern (mit Test in `tests/`).
+- Wiederverwendbare Funktionen können später nach `src/` wandern (mit Test in `tests/`).
 
 ## Schnittstelle zum Agentic Engineering Starter Template
 
@@ -86,7 +86,7 @@ Dieses Repo ist die ML-Methoden-Bibliothek; das Projekt-Skelett (Spec, Verifier,
 liefert das Agentic-Engineering-Starter-Template. Dessen `scripts/new-ml-project.sh` kopiert von hier:
 `.claude/skills/<name>/SKILL.md`, `notebooks/0X_<name>.ipynb` (Paar), `src/config.py`,
 `src/data_loader.py`, `configs/config.yaml`. Diese Pfade nicht umbenennen oder verschieben.
-Skills muessen ohne die hiesigen Rules und Settings funktionieren.
+Skills müssen ohne die hiesigen Rules und Settings funktionieren.
 
 ## Umgebung & Befehle
 
@@ -97,14 +97,14 @@ uv sync --extra gpu          # Lenovo Notebook mit NVIDIA GPU (CUDA 13.0)
 uv run python -m pytest      # Launcher-EXEs (pytest.exe, pre-commit.exe) sind auf Pistor-Notebooks blockiert
 uv run ruff check --fix src tests && uv run ruff format src tests
 uv run python -m pre_commit install    # einmalig
-uv lock && uv export --no-hashes --group dev -o requirements.txt   # nach Dependency-Aenderung (haelt conda synchron)
+uv lock && uv export --no-hashes --group dev -o requirements.txt   # nach Dependency-Änderung (hält conda synchron)
 
 # conda
 conda env create -f environment.yml && conda activate bida-ml
 ```
 
 - Firmen-Proxy: `pyproject.toml` setzt `system-certs = true`, damit `uv` die Windows-Zertifikate nutzt.
-- Dependencies nur in `pyproject.toml` aendern, nie direkt in `requirements.txt`.
+- Dependencies nur in `pyproject.toml` ändern, nie direkt in `requirements.txt`.
 
 ## Sprach-Konventionen
 
@@ -113,10 +113,11 @@ conda env create -f environment.yml && conda activate bida-ml
 - **SQL**: Englisch, Objektnamen UPPER_CASE
 - **Commit Messages**: Englisch
 - Keine Emojis im Projekt (Doku, Notebooks, Code, Commits).
+- Deutsche Texte mit echten Umlauten (ä, ö, ü), Schweizer Schreibweise ohne Eszett (ss), keine Gedankenstriche.
 
 ## Workflow-Regeln
 
-- Daten laden ueber `src.data_loader` (`load_query`, `load_table`, `load_timeseries`); Tabellennamen aus `configs/config.yaml`
+- Daten laden über `src.data_loader` (`load_query`, `load_table`, `load_timeseries`); Tabellennamen aus `configs/config.yaml`
   (mit `{env}`-Platzhalter, z.B. `"{env}_DATALAKE.MSACCESS.PSA_..._90"`).
 - Ergebnisse mit `write_to_snowflake(df, "TABELLE", schema=...)` nach `PROD_ML` schreiben (append, nicht overwrite),
   immer mit `run_id`, Modellname, Version und Zeitstempel.
@@ -129,12 +130,12 @@ conda env create -f environment.yml && conda activate bida-ml
 | Problem | Template | Skill | Modelle |
 |---------|----------|-------|---------|
 | Zeitreihen-Prognosen | `02_forecasting.ipynb` | forecasting | StatsForecast, MLForecast (LightGBM/XGBoost), NeuralForecast (N-HiTS, TFT, ...) |
-| Binaere/Multi-Class Klassifikation | `03_classification.ipynb` | classification | LightGBM, XGBoost, sklearn |
+| Binäre/Multi-Class Klassifikation | `03_classification.ipynb` | classification | LightGBM, XGBoost, sklearn |
 | Kontinuierliche Zielvariable | `04_regression.ipynb` | regression | LightGBM, XGBoost, Optuna |
 
 ### Pflicht-Schritte
-1. Daten aus Snowflake laden und pruefen
-2. EDA (Missing Values, Verteilungen, Zusammenhaenge)
+1. Daten aus Snowflake laden und prüfen
+2. EDA (Missing Values, Verteilungen, Zusammenhänge)
 3. Train/Test Split (zeitlich bei Zeitreihen, stratified bei Klassifikation)
 4. Baseline-Modell (jedes ML-Modell muss die Baseline schlagen)
 5. Cross-Validation
@@ -150,18 +151,18 @@ conda env create -f environment.yml && conda activate bida-ml
 ## Code-Standards
 
 - Funktionen `snake_case`, Klassen `PascalCase`, Konstanten `UPPER_SNAKE_CASE`.
-- ruff (Zeilenlaenge 100, Regeln E/F/I/W/B/UP), Type Hints.
+- ruff (Zeilenlänge 100, Regeln E/F/I/W/B/UP), Type Hints.
 - Notebook-Outputs werden vor dem Commit von nbstripout entfernt.
 
-## Hinweise fuer Claude
+## Hinweise für Claude
 
-- Der User folgt einer Text-Anleitung im Notebook und braucht Code fuer einzelne Schritte.
-  Code gehoert in das Arbeits-Notebook des Users, nicht in die Template-Notebooks und nicht in `src/`.
+- Der User folgt einer Text-Anleitung im Notebook und braucht Code für einzelne Schritte.
+  Code gehört in das Arbeits-Notebook des Users, nicht in die Template-Notebooks und nicht in `src/`.
 - Passenden Skill nutzen (forecasting / classification / regression) und die Schritt-Nummer des Notebooks referenzieren.
-- Zuerst klaeren: Welche Quelltabelle, welche Zielvariable, welcher Horizont. Fehlt `tables.training_data` in der Config, darauf hinweisen.
+- Zuerst klären: Welche Quelltabelle, welche Zielvariable, welcher Horizont. Fehlt `tables.training_data` in der Config, darauf hinweisen.
 - Bei Zeitreihen immer zeitlich splitten, bei Klassifikation immer stratified.
 - Baseline zuerst, dann komplexere Modelle.
-- GPU: NeuralForecast/PyTorch nutzen CUDA automatisch; mit `torch.cuda.is_available()` pruefen.
+- GPU: NeuralForecast/PyTorch nutzen CUDA automatisch; mit `torch.cuda.is_available()` prüfen.
 - `.env` und Private Keys nie lesen oder ausgeben.
 - Ergebnisse immer nach PROD_ML schreiben; nichts nach PROD_DATALAKE / PROD_CONSUMPTION.
 - Notebook-Text auf Deutsch, Code auf Englisch, keine Emojis.

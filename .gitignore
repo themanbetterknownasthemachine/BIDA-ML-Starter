@@ -33,7 +33,7 @@ Thumbs.db
 *.p8
 *.pem
 
-# Claude Code (persoenliche Overrides, nicht im Team teilen)
+# Claude Code (persönliche Overrides, nicht im Team teilen)
 .claude/settings.local.json
 CLAUDE.local.md
 

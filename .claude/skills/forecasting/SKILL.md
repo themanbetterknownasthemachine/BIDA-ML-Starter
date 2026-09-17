@@ -1,12 +1,12 @@
 ---
 name: forecasting
-description: Code fuer Zeitreihen-Forecasting im BIDA ML Starter (Baseline, StatsForecast, MLForecast/LightGBM, NeuralForecast, Evaluation, Schreiben nach PROD_ML). Nutzen, wenn der User einen Schritt aus notebooks/02_forecasting.ipynb umsetzt oder nach Forecast-Code fragt.
+description: Code für Zeitreihen-Forecasting im BIDA ML Starter (Baseline, StatsForecast, MLForecast/LightGBM, NeuralForecast, Evaluation, Schreiben nach PROD_ML). Nutzen, wenn der User einen Schritt aus notebooks/02_forecasting.ipynb umsetzt oder nach Forecast-Code fragt.
 ---
 
 # Forecasting Skill
 
 Der User folgt der Anleitung in `notebooks/02_forecasting.ipynb` (20 Schritte) und braucht Code
-fuer einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users geschrieben.
+für einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users geschrieben.
 
 ## Kontext
 
@@ -15,10 +15,10 @@ fuer einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users gesc
 - **Ziel:** Forecasts nach `PROD_ML.INFERENCE`, Laufinfos nach `PROD_ML.REGISTRY`,
   Metriken nach `PROD_ML.MONITORING` (siehe `write_to_snowflake`).
 - **Ansatz:** Von einfach zu komplex. Baseline ist Pflicht. Der User entscheidet, welche Modelle er testet.
-- **src/ enthaelt nur** `config.py` und `data_loader.py`; alles andere wird im Notebook geschrieben.
+- **src/ enthält nur** `config.py` und `data_loader.py`; alles andere wird im Notebook geschrieben.
 - **GPU:** NeuralForecast nutzt automatisch CUDA, wenn `torch.cuda.is_available()`.
 
-## Verfuegbare Modelle
+## Verfügbare Modelle
 
 | Familie | Modell | Library | Exogene Features |
 |---------|--------|---------|------------------|
@@ -50,9 +50,9 @@ from src.data_loader import load_query, load_timeseries, write_to_snowflake
 cfg = load_config()
 
 HORIZON = 14        # Forecast-Horizont in Perioden
-INPUT_SIZE = 28     # Lookback fuer neurale Modelle
-FREQ = "D"          # "D" Kalendertage, "B" Geschaeftstage
-SEASON = 7          # 7 Kalenderwoche, 5 Geschaeftswoche, 12 Monate
+INPUT_SIZE = 28     # Lookback für neurale Modelle
+FREQ = "D"          # "D" Kalendertage, "B" Geschäftstage
+SEASON = 7          # 7 Kalenderwoche, 5 Geschäftswoche, 12 Monate
 ```
 
 ### Schritt 2: Daten laden & bereinigen
@@ -69,7 +69,7 @@ print(f"Shape: {df.shape}")
 print(f"Zeitraum: {df['ds'].min().date()} bis {df['ds'].max().date()}")
 print(f"Serien: {df['unique_id'].nunique()}")
 
-# Luecken pruefen
+# Lücken prüfen
 full_idx = df.groupby("unique_id")["ds"].agg(["min", "max", "count"])
 full_idx["expected"] = (full_idx["max"] - full_idx["min"]).dt.days + 1
 print(full_idx)
@@ -109,7 +109,7 @@ def add_calendar_features(data: pd.DataFrame) -> pd.DataFrame:
 df = add_calendar_features(df)
 exog_cols = ["dow", "month", "is_weekend", "is_holiday", "day_before_holiday", "is_month_start", "is_month_end"]
 
-# Lag- und Rolling-Features (nur fuer Modelle mit eigener Feature-Tabelle, z.B. OLS)
+# Lag- und Rolling-Features (nur für Modelle mit eigener Feature-Tabelle, z.B. OLS)
 for lag in [1, SEASON, 2 * SEASON]:
     df[f"y_lag_{lag}"] = df.groupby("unique_id")["y"].shift(lag)
 df["y_roll_mean_7"] = df.groupby("unique_id")["y"].transform(lambda x: x.shift(1).rolling(7).mean())
@@ -218,7 +218,7 @@ mlf = MLForecast(
     lags=[1, 2, 3, SEASON, 2 * SEASON],
     lag_transforms={1: [RollingMean(window_size=7)]},
     # kein date_features: Kalender-Features (dow, month, ...) kommen bereits aus Schritt 4 (exog_cols);
-    # doppelte Spaltennamen fuehren beim predict zu einem Feature-Mismatch
+    # doppelte Spaltennamen führen beim predict zu einem Feature-Mismatch
 )
 mlf.fit(train_nf, static_features=[])
 pred_ml = mlf.predict(h=HORIZON, X_df=future_exog)
@@ -255,7 +255,7 @@ for m in ["NHITS", "TFT", "TSMixerx", "TiDE", "NBEATS", "PatchTST"]:
 
 ### Schritt 12: Cross-Validation
 ```python
-# Rolling-Origin CV, gleiche Logik fuer StatsForecast, MLForecast und NeuralForecast
+# Rolling-Origin CV, gleiche Logik für StatsForecast, MLForecast und NeuralForecast
 cv_df = sf.cross_validation(df=train_nf[["unique_id", "ds", "y"]], h=HORIZON, n_windows=3, step_size=HORIZON)
 cv_summary = cv_df.groupby("cutoff").apply(lambda g: pd.Series({m: calc_metrics(g["y"], g[m])["MAE"] for m in ["AutoARIMA", "AutoETS", "AutoTheta"]}))
 print(cv_summary.round(2))
@@ -288,7 +288,7 @@ print(merged.groupby("dow")["abs_err"].mean().round(2))
 print(merged.groupby("is_holiday")["abs_err"].mean().round(2))
 ```
 
-### Schritt 15: SHAP (fuer LightGBM via MLForecast)
+### Schritt 15: SHAP (für LightGBM via MLForecast)
 ```python
 import shap
 
@@ -342,7 +342,7 @@ nf_final.save(path=str(MODEL_DIR), overwrite=True)
 RUN_ID = f"{cfg['project']['name'].lower().replace(' ', '_')}_{pd.Timestamp.now():%Y%m%d_%H%M%S}"
 MODEL_NAME, MODEL_VERSION = "NHITS", "v1"
 
-# Zukunfts-Features fuer den echten Forecast bereitstellen (Kalender ist bekannt)
+# Zukunfts-Features für den echten Forecast bereitstellen (Kalender ist bekannt)
 future_dates = pd.date_range(df["ds"].max() + pd.Timedelta(days=1), periods=HORIZON, freq=FREQ)
 future_df = pd.MultiIndex.from_product([df["unique_id"].unique(), future_dates], names=["unique_id", "ds"]).to_frame(index=False)
 future_df = add_calendar_features(future_df)[["unique_id", "ds"] + exog_cols]
@@ -365,7 +365,7 @@ write_to_snowflake(metrics, "MODEL_EVALUATION_LOG", schema=cfg["snowflake"]["sch
 
 ## Regeln
 
-- Zeitreihen IMMER zeitlich splitten, nie zufaellig.
+- Zeitreihen IMMER zeitlich splitten, nie zufällig.
 - Baseline ist Pflicht. Jedes weitere Modell muss die Baseline schlagen.
 - Von einfach zu komplex: Statistisch, dann ML, dann Neural.
 - Exogene Features: nur verwenden, was in der Zukunft bekannt ist (Kalender, Feiertage, geplante Aktionen).

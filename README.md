@@ -1,10 +1,10 @@
 # BIDA ML Starter - Pistor
 
-Standardisiertes ML-Template fuer das Pistor BI & Data Analytics Team.
-Einsetzbar fuer Forecasting, Klassifikation, Regression und weitere ML-Aufgaben.
+Standardisiertes ML-Template für das Pistor BI & Data Analytics Team.
+Einsetzbar für Forecasting, Klassifikation, Regression und weitere ML-Aufgaben.
 
 Das Projekt wird lokal geklont (Windows-Notebook, optional mit NVIDIA-GPU) oder auf einer Linux-VM
-via Remote-SSH genutzt. Snowflake ist Datenquelle (`PROD_DATALAKE`) und Ziel fuer alle Ergebnisse (`PROD_ML`).
+via Remote-SSH genutzt. Snowflake ist Datenquelle (`PROD_DATALAKE`) und Ziel für alle Ergebnisse (`PROD_ML`).
 Der Code entsteht in VS Code mit Claude Code, geleitet durch die Template-Notebooks und Skills.
 
 ## Voraussetzungen
@@ -15,7 +15,7 @@ Der Code entsteht in VS Code mit Claude Code, geleitet durch die Template-Notebo
 
 ## Setup mit uv (empfohlen)
 
-1. uv installieren (einmalig): `winget install astral-sh.uv` oder ueber die IT.
+1. uv installieren (einmalig): `winget install astral-sh.uv` oder über die IT.
 2. Repository klonen und Umgebung erstellen:
    ```bash
    git clone <repo-url>
@@ -23,7 +23,7 @@ Der Code entsteht in VS Code mit Claude Code, geleitet durch die Template-Notebo
    uv sync --extra cpu      # Laptop ohne GPU, VM
    uv sync --extra gpu      # Lenovo Notebook mit NVIDIA GPU (CUDA 13.0)
    ```
-   `uv` laedt Python 3.12 automatisch und legt `.venv/` an. Der Firmen-Proxy ist bereits beruecksichtigt
+   `uv` lädt Python 3.12 automatisch und legt `.venv/` an. Der Firmen-Proxy ist bereits berücksichtigt
    (`system-certs = true` in `pyproject.toml`).
 3. Credentials anlegen (siehe Abschnitt Snowflake-Zugang):
    ```bash
@@ -36,7 +36,7 @@ Der Code entsteht in VS Code mit Claude Code, geleitet durch die Template-Notebo
    Hinweis: Auf den Pistor-Notebooks werden die Launcher-EXEs in `.venv/Scripts` (z.B. `pytest.exe`,
    `pre-commit.exe`) blockiert. Tools deshalb immer als Modul starten: `uv run python -m pytest`,
    `uv run python -m pre_commit ...`. `uv run ruff` funktioniert direkt.
-5. In VS Code den Kernel `.venv` waehlen und `notebooks/00_environment_check.ipynb` ausfuehren.
+5. In VS Code den Kernel `.venv` wählen und `notebooks/00_environment_check.ipynb` ausführen.
 
 ## Setup mit conda
 
@@ -49,7 +49,7 @@ cp .env.example .env
 python -m pre_commit install
 ```
 
-`environment.yml` installiert ueber pip exakt die Versionen aus `requirements.txt`, die aus `uv.lock` exportiert
+`environment.yml` installiert über pip exakt die Versionen aus `requirements.txt`, die aus `uv.lock` exportiert
 wird. uv- und conda-Umgebungen sind damit identisch.
 
 GPU mit conda:
@@ -59,11 +59,11 @@ pip install --force-reinstall torch --index-url https://download.pytorch.org/whl
 
 ## GPU
 
-- Die neuen Lenovo-Notebooks mit NVIDIA-GPU brauchen einen aktuellen NVIDIA-Treiber (>= 580 fuer CUDA 13.0).
-  Bei aelteren Treibern in `pyproject.toml` den Index auf `cu126` umstellen und `uv lock` ausfuehren.
-- Pruefen: `00_environment_check.ipynb` zeigt `CUDA: True` und den GPU-Namen.
-- NeuralForecast (N-HiTS, TFT, ...) nutzt die GPU automatisch. LightGBM und XGBoost laufen auf CPU (fuer
-  tabellarische Daten in unserer Groessenordnung ausreichend).
+- Die neuen Lenovo-Notebooks mit NVIDIA-GPU brauchen einen aktuellen NVIDIA-Treiber (>= 580 für CUDA 13.0).
+  Bei älteren Treibern in `pyproject.toml` den Index auf `cu126` umstellen und `uv lock` ausführen.
+- Prüfen: `00_environment_check.ipynb` zeigt `CUDA: True` und den GPU-Namen.
+- NeuralForecast (N-HiTS, TFT, ...) nutzt die GPU automatisch. LightGBM und XGBoost laufen auf CPU (für
+  tabellarische Daten in unserer Grössenordnung ausreichend).
 
 ## Snowflake-Zugang
 
@@ -77,8 +77,8 @@ SF_PRIVATE_KEY_PATH=~/.snowflake/rsa_key.p8
 ```
 
 Rolle (`ML_DEVELOPER`), Warehouse (`CONSUMER`), Datenbank (`{env}_ML`) und Schema kommen aus
-`configs/config.yaml`; `SF_ROLE`, `SF_WAREHOUSE`, `SF_DATABASE`, `SF_SCHEMA` in `.env` sind nur
-fuer Ausnahmen.
+`configs/config.yaml`; `SF_ROLE`, `SF_WAREHOUSE`, `SF_SCHEMA` in `.env` sind nur
+für Ausnahmen. Die Datenbank ist bewusst nicht überschreibbar, `ML_ENV` bleibt der einzige Schalter.
 
 Empfohlen ist Key-Pair-Authentifizierung (kein MFA-Prompt bei jeder Verbindung):
 
@@ -98,14 +98,14 @@ oder `SF_PASSWORD` (mit MFA).
 |---------|--------|-------|
 | Quelle (lesen) | `PROD_DATALAKE.<QUELLE>.PSA_*`, `*_90` Views | Historisierte Rohdaten, rollierendes 90-Tage-Fenster |
 | Ziel | `PROD_ML.INFERENCE` | Forecasts und Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
-| Ziel | `PROD_ML.REGISTRY` | Modell-Laeufe, Parameter, Deployment |
+| Ziel | `PROD_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment |
 | Ziel | `PROD_ML.MONITORING` | Metriken, DQ-Checks, Forecast vs. Actual |
 
-Aus den Notebooks wird ausschliesslich in die ML-Datenbank geschrieben. Den Rueckfluss ins DWH und nach
-Power BI uebernimmt das DWH-Team.
+Aus den Notebooks wird ausschliesslich in die ML-Datenbank geschrieben. Den Rückfluss ins DWH und nach
+Power BI übernimmt das DWH-Team.
 
 Umgebungen: `ML_ENV` in `.env` (`DEV`, `INT` oder `PROD`) ist der einzige Schalter. `configs/config.yaml`
-verwendet Vorlagen wie `"{env}_ML"` und `"{env}_DATALAKE.MSACCESS.PSA_..._90"`, die beim Laden aufgeloest
+verwendet Vorlagen wie `"{env}_ML"` und `"{env}_DATALAKE.MSACCESS.PSA_..._90"`, die beim Laden aufgelöst
 werden. Auf Laptops steht `ML_ENV=DEV`; bis zum Deployment existiert ohnehin nur `DEV_ML`. Code, Config
 und Skills bleiben in allen Umgebungen identisch.
 
@@ -114,15 +114,15 @@ und Skills bleiben in allen Umgebungen identisch.
 1. Quelltabelle in `configs/config.yaml` unter `tables.training_data` eintragen, voll qualifiziert und mit
    `{env}` statt `DEV_`/`PROD_`, z.B. `"{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"`.
 2. Eigenes Arbeits-Notebook anlegen, z.B. `notebooks/work_<projekt>.ipynb`.
-3. Passendes Template-Notebook oeffnen (`01_` bis `04_`) und Schritt fuer Schritt durchgehen.
-4. Fuer jeden Schritt Claude Code nach dem Code fragen, z.B. "Schritt 8 aus 02_forecasting fuer meine Daten".
-   Claude nutzt dafuer automatisch die Skills in `.claude/skills/` (forecasting, classification, regression).
+3. Passendes Template-Notebook öffnen (`01_` bis `04_`) und Schritt für Schritt durchgehen.
+4. Für jeden Schritt Claude Code nach dem Code fragen, z.B. "Schritt 8 aus 02_forecasting für meine Daten".
+   Claude nutzt dafür automatisch die Skills in `.claude/skills/` (forecasting, classification, regression).
 5. Ergebnisse mit `write_to_snowflake()` nach `PROD_ML` schreiben.
 
 | Notebook | Use Case | Inhalt |
 |----------|----------|--------|
-| `00_environment_check` | Smoke-Test | Libraries, GPU und Snowflake-Verbindung pruefen (mit Code) |
-| `01_data_exploration` | EDA | Datenqualitaet, Verteilungen, Muster (8 Schritte) |
+| `00_environment_check` | Smoke-Test | Libraries, GPU und Snowflake-Verbindung prüfen (mit Code) |
+| `01_data_exploration` | EDA | Datenqualität, Verteilungen, Muster (8 Schritte) |
 | `02_forecasting` | Zeitreihen | Baseline, statistische Modelle, ML, Neural (20 Schritte) |
 | `03_classification` | Klassifikation | LightGBM, XGBoost, sklearn Pipelines (11 Schritte) |
 | `04_regression` | Regression | LightGBM, XGBoost, Optuna (16 Schritte) |
@@ -133,7 +133,7 @@ Die Template-Notebooks enthalten nur Text (Anleitung), keinen Code. Einzige Ausn
 
 ```
 BIDA-ML-Starter/
-├── CLAUDE.md                 # Instruktionen fuer Claude Code
+├── CLAUDE.md                 # Instruktionen für Claude Code
 ├── README.md                 # Diese Datei
 ├── pyproject.toml, uv.lock   # Dependencies (uv); Extras cpu / gpu
 ├── environment.yml, requirements.txt  # Dependencies (conda, aus uv.lock exportiert)
@@ -147,11 +147,11 @@ BIDA-ML-Starter/
 │   ├── hooks/                # protect-files.sh: blockt Credential-Zugriff und destruktives SQL
 │   └── agents/               # code-reviewer, security-reviewer (read-only)
 ├── configs/config.yaml       # Zentrale Konfiguration ({env}-Vorlagen, Quelltabellen)
-├── sql/                      # Berechtigungen der Rolle ML_DEVELOPER (Referenz fuer Admins)
+├── sql/                      # Berechtigungen der Rolle ML_DEVELOPER (Referenz für Admins)
 ├── notebooks/                # Template-Notebooks (Anleitungen), 00 = Smoke-Test
 ├── src/                      # config.py + data_loader.py
 ├── tests/                    # Unit Tests
-├── docs/                     # Zusaetzliche Dokumentation
+├── docs/                     # Zusätzliche Dokumentation
 ├── data/                     # Lokale Daten (nicht in Git)
 ├── models/                   # Trainierte Modelle (nicht in Git)
 └── reports/figures/          # Plots, Metriken
@@ -160,14 +160,14 @@ BIDA-ML-Starter/
 ## Verwendung im Agentic Engineering Starter Template
 
 Das [Agentic-Engineering-Starter-Template](https://github.com/themanbetterknownasthemachine/Agentic-Engineering-Starter-Template)
-ist das Projekt-Skelett fuer jedes Claude-Code-Projekt (Spec, Verifier, Hooks, Security-Rules).
+ist das Projekt-Skelett für jedes Claude-Code-Projekt (Spec, Verifier, Hooks, Security-Rules).
 BIDA-ML-Starter ist die ML-Methoden-Bibliothek dazu. Bei einem neuen ML-Projekt kopiert
 `scripts/new-ml-project.sh` aus diesem Repo ins Projekt:
 
 | Datei in BIDA-ML-Starter | Ziel im Projekt | Zweck |
 |--------------------------|-----------------|-------|
 | `.claude/skills/<name>/SKILL.md` | `.claude/skills/<name>/SKILL.md` | Methoden-Skill (Frontmatter bereits enthalten) |
-| `notebooks/0X_<name>.ipynb` | `notebooks/` | Anleitungs-Notebook, gehoert zum Skill (immer als Paar kopieren) |
+| `notebooks/0X_<name>.ipynb` | `notebooks/` | Anleitungs-Notebook, gehört zum Skill (immer als Paar kopieren) |
 | `src/config.py`, `src/data_loader.py` | `src/` | Config und Snowflake-Verbindung |
 | `configs/config.yaml` | `configs/` | Ziel-Schemas in PROD_ML, Quelltabelle |
 
@@ -175,19 +175,19 @@ Diese Pfade sind die Schnittstelle zum Template und bleiben stabil. Alles andere
 (`.claude/settings.json`, `.claude/rules/`, `environment.yml`, README) dient nur der Standalone-Nutzung
 und wird nicht kopiert; Hooks, Security-Rules und Verifier kommen aus dem Template.
 
-## Qualitaet und Reproduzierbarkeit
+## Qualität und Reproduzierbarkeit
 
-- `uv run python -m pytest` fuehrt die Tests aus, `uv run ruff check --fix src tests` und `uv run ruff format src tests` formatieren.
-- pre-commit entfernt Notebook-Outputs (nbstripout) und prueft Python-Code (ruff) vor jedem Commit.
-- Dependencies nur in `pyproject.toml` aendern, danach `uv lock` und
-  `uv export --no-hashes --group dev -o requirements.txt` (haelt conda synchron). Beides committen.
+- `uv run python -m pytest` führt die Tests aus, `uv run ruff check --fix src tests` und `uv run ruff format src tests` formatieren.
+- pre-commit entfernt Notebook-Outputs (nbstripout) und prüft Python-Code (ruff) vor jedem Commit.
+- Dependencies nur in `pyproject.toml` ändern, danach `uv lock` und
+  `uv export --no-hashes --group dev -o requirements.txt` (hält conda synchron). Beides committen.
 - `random_state=42` als Standard, Konfiguration in `configs/config.yaml`, keine hardcodierten Pfade oder Tabellennamen.
 
 ## Konventionen
 
 - Notebooks: Deutsch (Markdown). Python-Code, SQL und Commits: Englisch.
-- Keine Emojis im Projekt.
+- Keine Emojis im Projekt. Deutsche Texte mit ä, ö, ü, ohne Eszett und ohne Gedankenstriche.
 
 ## Team
 
-Erstellt von Toni Buehlmann, Pistor BI & Data Analytics
+Erstellt von Toni Bühlmann, Pistor BI & Data Analytics
