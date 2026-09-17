@@ -74,7 +74,7 @@ SF_ACCOUNT=pistor.eu-central-1
 SF_USER=dein_user
 SF_ROLE=ML_DEVELOPER
 SF_WAREHOUSE=CONSUMER
-SF_DATABASE=PROD_ML
+SF_DATABASE=DEV_ML
 SF_SCHEMA=INFERENCE
 SF_PRIVATE_KEY_PATH=~/.snowflake/rsa_key.p8
 ```
@@ -100,8 +100,12 @@ oder `SF_PASSWORD` (mit MFA).
 | Ziel | `PROD_ML.REGISTRY` | Modell-Laeufe, Parameter, Deployment |
 | Ziel | `PROD_ML.MONITORING` | Metriken, DQ-Checks, Forecast vs. Actual |
 
-Aus den Notebooks wird ausschliesslich nach `PROD_ML` geschrieben. Den Rueckfluss ins DWH und nach Power BI
-uebernimmt das DWH-Team.
+Aus den Notebooks wird ausschliesslich in die ML-Datenbank geschrieben. Den Rueckfluss ins DWH und nach
+Power BI uebernimmt das DWH-Team.
+
+Umgebungen: Bis zum Deployment gibt es nur `DEV_ML` (gleiche Schemas). Welche Datenbank Ziel ist,
+steuert allein `SF_DATABASE` in `.env` (`DEV_ML` heute, `PROD_ML` nach dem Deployment). Code, Config
+und Skills bleiben unveraendert.
 
 ## Arbeiten mit dem Template
 

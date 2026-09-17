@@ -1,10 +1,11 @@
 -- =============================================================================
 -- BIDA ML Starter - Berechtigungen fuer die Rolle ML_DEVELOPER (Referenz)
 -- =============================================================================
--- PROD_ML (Schemas INFERENCE, REGISTRY, MONITORING) existiert bereits und wird
--- vom DWH-Team verwaltet. Dieses Script dokumentiert, welche Rechte ein
--- ML-Entwickler braucht. Nur ausfuehren (Admin), wenn ein neuer User oder ein
--- neues Quellschema dazukommt.
+-- Die ML-Datenbank (Schemas INFERENCE, REGISTRY, MONITORING) wird vom DWH-Team
+-- verwaltet: DEV_ML heute, PROD_ML nach dem Deployment. Dieses Script dokumentiert,
+-- welche Rechte ein ML-Entwickler braucht. Fuer DEV_ML PROD_ML durch DEV_ML ersetzen
+-- (SET db = 'DEV_ML' waere die Alternative). Nur ausfuehren (Admin), wenn ein neuer
+-- User oder ein neues Quellschema dazukommt.
 -- =============================================================================
 
 USE ROLE SECURITYADMIN;

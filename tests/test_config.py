@@ -20,11 +20,11 @@ def test_random_state():
 
 
 def test_snowflake_config():
-    """Snowflake config should point to PROD_ML with the three target schemas."""
+    """Snowflake config should point to the ML database with the three target schemas."""
     from src.config import get_snowflake_config
 
     sf = get_snowflake_config()
-    assert sf["database"] == "PROD_ML"
+    assert sf["database"] in ("DEV_ML", "PROD_ML")
     assert sf["role"] == "ML_DEVELOPER"
     assert sf["warehouse"] == "CONSUMER"
     assert set(sf["schemas"]) == {"inference", "registry", "monitoring"}

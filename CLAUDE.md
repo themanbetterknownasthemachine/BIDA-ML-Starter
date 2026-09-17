@@ -53,6 +53,9 @@ BIDA-ML-Starter/
 | Ziel | `PROD_ML.MONITORING` | Metriken und DQ-Checks (`MODEL_EVALUATION_LOG`, `DQ_CHECK_LOG`, `V_FORECAST_VS_ACTUAL`) |
 
 - Rolle `ML_DEVELOPER`, Warehouse `CONSUMER` (Defaults in `configs/config.yaml` und `.env.example`).
+- **Umgebungen:** Bis zum Deployment existiert nur `DEV_ML` (gleiche Schemas wie `PROD_ML`).
+  Die Ziel-Datenbank steuert ausschliesslich `SF_DATABASE` in `.env`; Code und Config bleiben gleich.
+  `PROD_ML` in dieser Datei meint immer "die ML-Datenbank der jeweiligen Umgebung".
 - `PROD_ML` ist bewusst vom Data-Vault-Modell getrennt. Aus dem Notebook wird **nur nach PROD_ML** geschrieben.
   Der Rueckfluss ins DWH (`PROD_LANDING.ML` -> `PROD_DATALAKE.ML` -> `PROD_CONSUMPTION`) und Power BI liegen beim DWH-Team.
 - Kein Schreiben nach `PROD_DATALAKE`, `PROD_LANDING` oder `PROD_CONSUMPTION`.

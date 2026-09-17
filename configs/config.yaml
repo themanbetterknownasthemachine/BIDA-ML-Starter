@@ -13,7 +13,9 @@ project:
 snowflake:
   role: "ML_DEVELOPER"
   warehouse: "CONSUMER"
-  database: "PROD_ML"            # Ziel fuer alle Outputs des Notebooks
+  # Ziel-Datenbank fuer alle Outputs. Wird von SF_DATABASE in .env ueberschrieben:
+  # DEV_ML waehrend der Entwicklung, PROD_ML nach dem Deployment. Schemas sind in beiden gleich.
+  database: "DEV_ML"
   schemas:
     inference: "INFERENCE"       # Forecasts / Predictions (z.B. FORECAST_SNAPSHOT)
     registry: "REGISTRY"         # Modell-Laeufe, Parameter, Deployment
@@ -24,4 +26,6 @@ snowflake:
 # 90-Tage-Fenster. Beispiel Ruestmengen-Forecast:
 #   training_data: "PROD_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"
 tables:
+  # Hier den voll qualifizierten Namen der Quell-View eintragen, z.B.:
+  # training_data: "PROD_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"
   training_data: ""

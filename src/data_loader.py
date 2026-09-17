@@ -53,7 +53,7 @@ def _connection_params() -> dict:
         "user": user,
         "role": _env("ROLE", "ML_DEVELOPER"),
         "warehouse": _env("WAREHOUSE", "CONSUMER"),
-        "database": _env("DATABASE", "PROD_ML"),
+        "database": _env("DATABASE", "DEV_ML"),
         "schema": _env("SCHEMA", "INFERENCE"),
     }
 
@@ -140,21 +140,24 @@ def write_to_snowflake(
     database: str | None = None,
     overwrite: bool = False,
 ) -> None:
-    """Write a DataFrame to PROD_ML (default schema: INFERENCE).
+    """Write a DataFrame to the ML database (default schema: INFERENCE).
 
+    The target database comes from .env (SF_DATABASE): DEV_ML during development,
+    PROD_ML after deployment. config.yaml only provides the fallback and the schema names.
     Column names are written unquoted, i.e. Snowflake stores them in UPPER CASE.
 
     Args:
         df: DataFrame to write.
         table_name: Target table name (created automatically if missing).
         schema: Target schema. Default: snowflake.schemas.inference from config.yaml.
-        database: Target database. Default: snowflake.database from config.yaml.
+        database: Target database. Default: SF_DATABASE from .env, else config.yaml.
         overwrite: If True, replace the table. If False, append rows.
     """
     from src.config import load_config
 
+    load_dotenv()
     sf_cfg = load_config().get("snowflake", {})
-    database = database or sf_cfg.get("database", "PROD_ML")
+    database = database or _env("DATABASE") or sf_cfg.get("database", "DEV_ML")
     schema = schema or sf_cfg.get("schemas", {}).get("inference", "INFERENCE")
 
     get_session().write_pandas(
