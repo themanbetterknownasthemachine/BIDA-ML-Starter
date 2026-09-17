@@ -43,7 +43,7 @@ BIDA-ML-Starter/
 ├── data/                         -> Lokale Daten (nicht in Git)
 ├── models/                       -> Trainierte Modelle (nicht in Git)
 ├── reports/figures/              -> Plots, Metriken
-└── docs/
+└── docs/                         -> Kurzanleitung für das Team (PDF und HTML, gleicher Stil wie die Report-Anleitungen)
 ```
 
 ## Snowflake-Struktur

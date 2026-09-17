@@ -8,6 +8,8 @@ via Remote-SSH genutzt. Die Datenquelle ist frei wählbar (Snowflake, CSV, Excel
 Ziel für alle Ergebnisse ist die ML-Datenbank in Snowflake (`PROD_ML`).
 Der Code entsteht in VS Code mit Claude Code, geleitet durch die Template-Notebooks und Skills.
 
+Kurzanleitung für den Einstieg: [PDF](docs/Kurzanleitung_BIDA_ML_Starter.pdf) oder [HTML](docs/Kurzanleitung_BIDA_ML_Starter.html).
+
 ## Voraussetzungen
 
 - Git, VS Code mit den Extensions Python, Jupyter und Claude Code
@@ -154,7 +156,7 @@ BIDA-ML-Starter/
 ├── notebooks/                # Template-Notebooks (Anleitungen), 00 = Smoke-Test
 ├── src/                      # config.py + data_loader.py
 ├── tests/                    # Unit Tests
-├── docs/                     # Zusätzliche Dokumentation
+├── docs/                     # Kurzanleitung (PDF und HTML)
 ├── data/                     # Lokale Daten (nicht in Git)
 ├── models/                   # Trainierte Modelle (nicht in Git)
 └── reports/figures/          # Plots, Metriken
