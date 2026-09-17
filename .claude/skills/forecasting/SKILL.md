@@ -11,7 +11,8 @@ für einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users gesc
 ## Kontext
 
 - **Daten:** Zeitreihen aus Snowflake im Format `[unique_id, ds, y]` (+ optionale exogene Spalten).
-  Quelle steht in `configs/config.yaml` unter `tables.training_data` (View in `PROD_DATALAKE`).
+  Quelle ist frei: Snowflake (`tables.training_data` in `configs/config.yaml`, laden mit `load_timeseries()`)
+  oder Datei aus `data/raw/` (`pd.read_csv` usw.), danach auf `[unique_id, ds, y]` umbenennen.
 - **Ziel:** Forecasts nach `PROD_ML.INFERENCE`, Laufinfos nach `PROD_ML.REGISTRY`,
   Metriken nach `PROD_ML.MONITORING` (siehe `write_to_snowflake`).
 - **Ansatz:** Von einfach zu komplex. Baseline ist Pflicht. Der User entscheidet, welche Modelle er testet.
@@ -49,10 +50,10 @@ from src.data_loader import load_query, load_timeseries, write_to_snowflake
 
 cfg = load_config()
 
-HORIZON = 14        # Forecast-Horizont in Perioden
-INPUT_SIZE = 28     # Lookback für neurale Modelle
-FREQ = "D"          # "D" Kalendertage, "B" Geschäftstage
-SEASON = 7          # 7 Kalenderwoche, 5 Geschäftswoche, 12 Monate
+HORIZON = 14  # Forecast-Horizont in Perioden
+INPUT_SIZE = 28  # Lookback für neurale Modelle
+FREQ = "D"  # "D" Kalendertage, "B" Geschäftstage
+SEASON = 7  # 7 Kalenderwoche, 5 Geschäftswoche, 12 Monate
 ```
 
 ### Schritt 2: Daten laden & bereinigen
@@ -81,9 +82,12 @@ SERIE = df["unique_id"].iloc[0]
 s = df[df["unique_id"] == SERIE]
 
 fig, axes = plt.subplots(3, 1, figsize=(14, 10))
-axes[0].plot(s["ds"], s["y"]); axes[0].set_title(f"Zeitreihe {SERIE}")
-sns.boxplot(x=s["ds"].dt.dayofweek, y=s["y"], ax=axes[1]); axes[1].set_title("Wochentag")
-sns.barplot(x=s["ds"].dt.month, y=s["y"], ax=axes[2], errorbar=None); axes[2].set_title("Monat")
+axes[0].plot(s["ds"], s["y"])
+axes[0].set_title(f"Zeitreihe {SERIE}")
+sns.boxplot(x=s["ds"].dt.dayofweek, y=s["y"], ax=axes[1])
+axes[1].set_title("Wochentag")
+sns.barplot(x=s["ds"].dt.month, y=s["y"], ax=axes[2], errorbar=None)
+axes[2].set_title("Monat")
 plt.tight_layout()
 plt.show()
 ```
@@ -92,7 +96,10 @@ plt.show()
 ```python
 import holidays
 
-ch_holidays = holidays.country_holidays("CH", subdiv="LU", years=range(df["ds"].dt.year.min(), df["ds"].dt.year.max() + 2))
+ch_holidays = holidays.country_holidays(
+    "CH", subdiv="LU", years=range(df["ds"].dt.year.min(), df["ds"].dt.year.max() + 2)
+)
+
 
 def add_calendar_features(data: pd.DataFrame) -> pd.DataFrame:
     """Add calendar and holiday features that are known in the future."""
@@ -101,13 +108,24 @@ def add_calendar_features(data: pd.DataFrame) -> pd.DataFrame:
     out["month"] = out["ds"].dt.month
     out["is_weekend"] = (out["dow"] >= 5).astype(int)
     out["is_holiday"] = out["ds"].isin(pd.to_datetime(list(ch_holidays.keys()))).astype(int)
-    out["day_before_holiday"] = out.groupby("unique_id")["is_holiday"].shift(-1).fillna(0).astype(int)
+    out["day_before_holiday"] = (
+        out.groupby("unique_id")["is_holiday"].shift(-1).fillna(0).astype(int)
+    )
     out["is_month_start"] = out["ds"].dt.is_month_start.astype(int)
     out["is_month_end"] = out["ds"].dt.is_month_end.astype(int)
     return out
 
+
 df = add_calendar_features(df)
-exog_cols = ["dow", "month", "is_weekend", "is_holiday", "day_before_holiday", "is_month_start", "is_month_end"]
+exog_cols = [
+    "dow",
+    "month",
+    "is_weekend",
+    "is_holiday",
+    "day_before_holiday",
+    "is_month_start",
+    "is_month_end",
+]
 
 # Lag- und Rolling-Features (nur für Modelle mit eigener Feature-Tabelle, z.B. OLS)
 for lag in [1, SEASON, 2 * SEASON]:
@@ -146,13 +164,14 @@ print(f"Test:  {test['ds'].min().date()} bis {test['ds'].max().date()} ({len(tes
 
 # Nixtla-Format (StatsForecast, MLForecast, NeuralForecast)
 train_nf = train[["unique_id", "ds", "y"] + exog_cols]
-future_exog = test[["unique_id", "ds"] + exog_cols]     # bekannte Zukunfts-Features
+future_exog = test[["unique_id", "ds"] + exog_cols]  # bekannte Zukunfts-Features
 y_test = test.set_index(["unique_id", "ds"])["y"]
 ```
 
 ### Schritt 8: Baseline
 ```python
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+
 
 def calc_metrics(y_true, y_pred) -> dict:
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
@@ -161,8 +180,10 @@ def calc_metrics(y_true, y_pred) -> dict:
         "MAE": mean_absolute_error(y_true, y_pred),
         "RMSE": np.sqrt(mean_squared_error(y_true, y_pred)),
         "MAPE": np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100,
-        "sMAPE": np.mean(2 * np.abs(y_pred - y_true) / (np.abs(y_true) + np.abs(y_pred) + 1e-9)) * 100,
+        "sMAPE": np.mean(2 * np.abs(y_pred - y_true) / (np.abs(y_true) + np.abs(y_pred) + 1e-9))
+        * 100,
     }
+
 
 # Seasonal Naive: Wert von vor SEASON Perioden
 from statsforecast import StatsForecast
@@ -186,7 +207,8 @@ sf = StatsForecast(
         AutoTheta(season_length=SEASON),
         AutoCES(season_length=SEASON),
     ],
-    freq=FREQ, n_jobs=-1,
+    freq=FREQ,
+    n_jobs=-1,
 )
 pred_stats = sf.forecast(df=train_nf[["unique_id", "ds", "y"]], h=HORIZON)
 merged = test.merge(pred_stats, on=["unique_id", "ds"])
@@ -197,7 +219,9 @@ for m in ["AutoARIMA", "AutoETS", "AutoTheta", "CES"]:
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 tr, te = train[train["unique_id"] == SERIE], test[test["unique_id"] == SERIE]
-sarimax = SARIMAX(tr["y"].values, exog=tr[exog_cols], order=(1, 1, 1), seasonal_order=(1, 1, 1, SEASON)).fit(disp=False)
+sarimax = SARIMAX(
+    tr["y"].values, exog=tr[exog_cols], order=(1, 1, 1), seasonal_order=(1, 1, 1, SEASON)
+).fit(disp=False)
 pred_sarimax = sarimax.forecast(steps=len(te), exog=te[exog_cols])
 results[f"SARIMAX ({SERIE})"] = calc_metrics(te["y"], pred_sarimax)
 ```
@@ -211,8 +235,12 @@ from mlforecast.lag_transforms import RollingMean
 
 mlf = MLForecast(
     models={
-        "LightGBM": lgb.LGBMRegressor(n_estimators=500, learning_rate=0.05, random_state=RANDOM_STATE, verbosity=-1),
-        "XGBoost": xgb.XGBRegressor(n_estimators=500, learning_rate=0.05, random_state=RANDOM_STATE),
+        "LightGBM": lgb.LGBMRegressor(
+            n_estimators=500, learning_rate=0.05, random_state=RANDOM_STATE, verbosity=-1
+        ),
+        "XGBoost": xgb.XGBRegressor(
+            n_estimators=500, learning_rate=0.05, random_state=RANDOM_STATE
+        ),
     },
     freq=FREQ,
     lags=[1, 2, 3, SEASON, 2 * SEASON],
@@ -242,8 +270,8 @@ models = [
     TFT(**common, futr_exog_list=exog_cols),
     TSMixerx(**common, futr_exog_list=exog_cols, n_series=n_series),
     TiDE(**common, futr_exog_list=exog_cols),
-    NBEATS(**common),        # univariat
-    PatchTST(**common),      # univariat
+    NBEATS(**common),  # univariat
+    PatchTST(**common),  # univariat
 ]
 nf = NeuralForecast(models=models, freq=FREQ)
 nf.fit(df=train_nf)
@@ -256,8 +284,14 @@ for m in ["NHITS", "TFT", "TSMixerx", "TiDE", "NBEATS", "PatchTST"]:
 ### Schritt 12: Cross-Validation
 ```python
 # Rolling-Origin CV, gleiche Logik für StatsForecast, MLForecast und NeuralForecast
-cv_df = sf.cross_validation(df=train_nf[["unique_id", "ds", "y"]], h=HORIZON, n_windows=3, step_size=HORIZON)
-cv_summary = cv_df.groupby("cutoff").apply(lambda g: pd.Series({m: calc_metrics(g["y"], g[m])["MAE"] for m in ["AutoARIMA", "AutoETS", "AutoTheta"]}))
+cv_df = sf.cross_validation(
+    df=train_nf[["unique_id", "ds", "y"]], h=HORIZON, n_windows=3, step_size=HORIZON
+)
+cv_summary = cv_df.groupby("cutoff").apply(
+    lambda g: pd.Series(
+        {m: calc_metrics(g["y"], g[m])["MAE"] for m in ["AutoARIMA", "AutoETS", "AutoTheta"]}
+    )
+)
 print(cv_summary.round(2))
 print("Mittel:", cv_summary.mean().round(2).to_dict())
 print("Std:   ", cv_summary.std().round(2).to_dict())
@@ -276,8 +310,10 @@ for m in comparison.index[:4]:
     if m in merged.columns:
         mm = merged[merged["unique_id"] == SERIE]
         ax.plot(mm["ds"], mm[m], "--", label=m)
-ax.legend(); ax.set_title(f"Forecast vs. Actual ({SERIE})")
-plt.tight_layout(); plt.show()
+ax.legend()
+ax.set_title(f"Forecast vs. Actual ({SERIE})")
+plt.tight_layout()
+plt.show()
 ```
 
 ### Schritt 14: Fehleranalyse nach Wochentag
@@ -305,6 +341,7 @@ import optuna
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
+
 def objective(trial):
     model = NHITS(
         h=HORIZON,
@@ -315,10 +352,15 @@ def objective(trial):
         futr_exog_list=exog_cols,
         random_seed=RANDOM_STATE,
     )
-    cv = NeuralForecast(models=[model], freq=FREQ).cross_validation(df=train_nf, n_windows=3, step_size=HORIZON)
+    cv = NeuralForecast(models=[model], freq=FREQ).cross_validation(
+        df=train_nf, n_windows=3, step_size=HORIZON
+    )
     return (cv["y"] - cv["NHITS"]).abs().mean()
 
-study = optuna.create_study(direction="minimize", sampler=optuna.samplers.TPESampler(seed=RANDOM_STATE))
+
+study = optuna.create_study(
+    direction="minimize", sampler=optuna.samplers.TPESampler(seed=RANDOM_STATE)
+)
 study.optimize(objective, n_trials=30)
 print(study.best_params, study.best_value)
 ```
@@ -328,7 +370,19 @@ print(study.best_params, study.best_value)
 from pathlib import Path
 
 full_nf = df[["unique_id", "ds", "y"] + exog_cols]
-nf_final = NeuralForecast(models=[NHITS(h=HORIZON, input_size=INPUT_SIZE, max_steps=500, futr_exog_list=exog_cols, random_seed=RANDOM_STATE, **study.best_params)], freq=FREQ)
+nf_final = NeuralForecast(
+    models=[
+        NHITS(
+            h=HORIZON,
+            input_size=INPUT_SIZE,
+            max_steps=500,
+            futr_exog_list=exog_cols,
+            random_seed=RANDOM_STATE,
+            **study.best_params,
+        )
+    ],
+    freq=FREQ,
+)
 nf_final.fit(df=full_nf)
 
 MODEL_DIR = Path("models") / f"nhits_v1_{pd.Timestamp.today():%Y%m%d}"
@@ -344,23 +398,44 @@ MODEL_NAME, MODEL_VERSION = "NHITS", "v1"
 
 # Zukunfts-Features für den echten Forecast bereitstellen (Kalender ist bekannt)
 future_dates = pd.date_range(df["ds"].max() + pd.Timedelta(days=1), periods=HORIZON, freq=FREQ)
-future_df = pd.MultiIndex.from_product([df["unique_id"].unique(), future_dates], names=["unique_id", "ds"]).to_frame(index=False)
+future_df = pd.MultiIndex.from_product(
+    [df["unique_id"].unique(), future_dates], names=["unique_id", "ds"]
+).to_frame(index=False)
 future_df = add_calendar_features(future_df)[["unique_id", "ds"] + exog_cols]
 forecast = nf_final.predict(futr_df=future_df).rename(columns={"NHITS": "forecast"})
 
 # 1. Forecast -> PROD_ML.INFERENCE
-snapshot = forecast.assign(run_id=RUN_ID, model_name=MODEL_NAME, model_version=MODEL_VERSION, created_at=pd.Timestamp.now())
+snapshot = forecast.assign(
+    run_id=RUN_ID, model_name=MODEL_NAME, model_version=MODEL_VERSION, created_at=pd.Timestamp.now()
+)
 write_to_snowflake(snapshot, "FORECAST_SNAPSHOT")
 
 # 2. Lauf -> PROD_ML.REGISTRY
-run_info = pd.DataFrame([{"run_id": RUN_ID, "model_name": MODEL_NAME, "model_version": MODEL_VERSION,
-                          "params": str(study.best_params), "train_start": df["ds"].min(), "train_end": df["ds"].max(),
-                          "horizon": HORIZON, "created_at": pd.Timestamp.now()}])
+run_info = pd.DataFrame(
+    [
+        {
+            "run_id": RUN_ID,
+            "model_name": MODEL_NAME,
+            "model_version": MODEL_VERSION,
+            "params": str(study.best_params),
+            "train_start": df["ds"].min(),
+            "train_end": df["ds"].max(),
+            "horizon": HORIZON,
+            "created_at": pd.Timestamp.now(),
+        }
+    ]
+)
 write_to_snowflake(run_info, "MODEL_RUNS", schema=cfg["snowflake"]["schemas"]["registry"])
 
 # 3. Metriken -> PROD_ML.MONITORING
-metrics = comparison.reset_index().rename(columns={"index": "model"}).assign(run_id=RUN_ID, created_at=pd.Timestamp.now())
-write_to_snowflake(metrics, "MODEL_EVALUATION_LOG", schema=cfg["snowflake"]["schemas"]["monitoring"])
+metrics = (
+    comparison.reset_index()
+    .rename(columns={"index": "model"})
+    .assign(run_id=RUN_ID, created_at=pd.Timestamp.now())
+)
+write_to_snowflake(
+    metrics, "MODEL_EVALUATION_LOG", schema=cfg["snowflake"]["schemas"]["monitoring"]
+)
 ```
 
 ## Regeln

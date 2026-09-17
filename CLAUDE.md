@@ -7,7 +7,8 @@ Pistor BIDA ML Starter: Template für reproduzierbare Machine-Learning-Projekte
 
 - Gearbeitet wird **lokal** (Windows-Notebook, optional NVIDIA-GPU) oder auf einer Linux-VM via Remote-SSH,
   in VS Code mit Claude Code.
-- **Snowflake** ist Datenquelle (`PROD_DATALAKE`) und Ziel für alle Ergebnisse (`PROD_ML`).
+- **Datenquelle ist frei wählbar:** Snowflake (häufig Views in `PROD_DATALAKE`), Dateien (CSV, Excel, Parquet
+  in `data/raw/`) oder andere Systeme. **Ziel ist immer Snowflake:** die ML-Datenbank `PROD_ML`.
 - Environment mit `uv` (empfohlen) oder `conda`; beide installieren dieselben Versionen.
 
 ## Projektstruktur
@@ -49,7 +50,7 @@ BIDA-ML-Starter/
 
 | Bereich | Objekt | Zweck |
 |---------|--------|-------|
-| Quelle (nur lesen) | `PROD_DATALAKE.<QUELLE>.PSA_*` und `*_90` Views | Historisierte Rohdaten, `_90` = rollierendes 90-Tage-Fenster |
+| Quelle (optional, nur lesen) | z.B. `PROD_DATALAKE.<QUELLE>.PSA_*` und `*_90` Views | Häufigster Fall: historisierte Rohdaten, `_90` = rollierendes 90-Tage-Fenster. Andere Quellen sind zulässig |
 | Ziel | `PROD_ML.INFERENCE` | Forecasts / Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
 | Ziel | `PROD_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment (`MODEL_RUNS`, `MODEL_COEFFICIENTS`, `MODEL_DEPLOYMENT`) |
 | Ziel | `PROD_ML.MONITORING` | Metriken und DQ-Checks (`MODEL_EVALUATION_LOG`, `DQ_CHECK_LOG`, `V_FORECAST_VS_ACTUAL`) |
@@ -134,7 +135,7 @@ conda env create -f environment.yml && conda activate bida-ml
 | Kontinuierliche Zielvariable | `04_regression.ipynb` | regression | LightGBM, XGBoost, Optuna |
 
 ### Pflicht-Schritte
-1. Daten aus Snowflake laden und prüfen
+1. Daten laden (Snowflake, Datei oder andere Quelle) und prüfen
 2. EDA (Missing Values, Verteilungen, Zusammenhänge)
 3. Train/Test Split (zeitlich bei Zeitreihen, stratified bei Klassifikation)
 4. Baseline-Modell (jedes ML-Modell muss die Baseline schlagen)
@@ -159,7 +160,8 @@ conda env create -f environment.yml && conda activate bida-ml
 - Der User folgt einer Text-Anleitung im Notebook und braucht Code für einzelne Schritte.
   Code gehört in das Arbeits-Notebook des Users, nicht in die Template-Notebooks und nicht in `src/`.
 - Passenden Skill nutzen (forecasting / classification / regression) und die Schritt-Nummer des Notebooks referenzieren.
-- Zuerst klären: Welche Quelltabelle, welche Zielvariable, welcher Horizont. Fehlt `tables.training_data` in der Config, darauf hinweisen.
+- Zuerst klären: Welche Datenquelle (Snowflake-Tabelle, Datei, anderes System), welche Zielvariable, welcher Horizont.
+  Bei Snowflake-Quelle: fehlt `tables.training_data` in der Config, darauf hinweisen. Bei Dateien: mit pandas aus `data/raw/` laden.
 - Bei Zeitreihen immer zeitlich splitten, bei Klassifikation immer stratified.
 - Baseline zuerst, dann komplexere Modelle.
 - GPU: NeuralForecast/PyTorch nutzen CUDA automatisch; mit `torch.cuda.is_available()` prüfen.

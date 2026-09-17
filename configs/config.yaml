@@ -22,7 +22,9 @@ snowflake:
     registry: "REGISTRY"         # Modell-Läufe, Parameter, Deployment
     monitoring: "MONITORING"     # Metriken, DQ-Checks, Forecast vs. Actual
 
-# Quelltabellen oder Views, voll qualifiziert mit {env}. Rohdaten liegen im
+# Optional: Quelltabellen oder Views in Snowflake, voll qualifiziert mit {env}. Die Datenquelle
+# ist frei (auch CSV, Excel, Parquet oder andere Systeme); dann bleibt dieser Block leer.
+# Häufigster Fall: Rohdaten liegen im
 # DATALAKE; die *_90 Views liefern ein rollierendes 90-Tage-Fenster.
 # Beispiel Rüstmengen-Forecast:
 #   training_data: "{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"

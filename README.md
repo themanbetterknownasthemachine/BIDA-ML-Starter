@@ -4,7 +4,8 @@ Standardisiertes ML-Template für das Pistor BI & Data Analytics Team.
 Einsetzbar für Forecasting, Klassifikation, Regression und weitere ML-Aufgaben.
 
 Das Projekt wird lokal geklont (Windows-Notebook, optional mit NVIDIA-GPU) oder auf einer Linux-VM
-via Remote-SSH genutzt. Snowflake ist Datenquelle (`PROD_DATALAKE`) und Ziel für alle Ergebnisse (`PROD_ML`).
+via Remote-SSH genutzt. Die Datenquelle ist frei wählbar (Snowflake, CSV, Excel, Parquet, andere Systeme);
+Ziel für alle Ergebnisse ist die ML-Datenbank in Snowflake (`PROD_ML`).
 Der Code entsteht in VS Code mit Claude Code, geleitet durch die Template-Notebooks und Skills.
 
 ## Voraussetzungen
@@ -96,7 +97,7 @@ oder `SF_PASSWORD` (mit MFA).
 
 | Bereich | Objekt | Zweck |
 |---------|--------|-------|
-| Quelle (lesen) | `PROD_DATALAKE.<QUELLE>.PSA_*`, `*_90` Views | Historisierte Rohdaten, rollierendes 90-Tage-Fenster |
+| Quelle (optional, lesen) | z.B. `PROD_DATALAKE.<QUELLE>.PSA_*`, `*_90` Views | Häufigster Fall: historisierte Rohdaten, rollierendes 90-Tage-Fenster. Andere Quellen (Dateien, andere Systeme) sind genauso möglich |
 | Ziel | `PROD_ML.INFERENCE` | Forecasts und Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
 | Ziel | `PROD_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment |
 | Ziel | `PROD_ML.MONITORING` | Metriken, DQ-Checks, Forecast vs. Actual |
@@ -111,8 +112,10 @@ und Skills bleiben in allen Umgebungen identisch.
 
 ## Arbeiten mit dem Template
 
-1. Quelltabelle in `configs/config.yaml` unter `tables.training_data` eintragen, voll qualifiziert und mit
+1. Datenquelle festlegen. Bei Snowflake: Tabelle oder View in `configs/config.yaml` unter `tables.training_data`
+   eintragen, voll qualifiziert und mit
    `{env}` statt `DEV_`/`PROD_`, z.B. `"{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"`.
+   Bei Dateien: nach `data/raw/` legen (nicht in Git) und mit pandas laden.
 2. Eigenes Arbeits-Notebook anlegen, z.B. `notebooks/work_<projekt>.ipynb`.
 3. Passendes Template-Notebook öffnen (`01_` bis `04_`) und Schritt für Schritt durchgehen.
 4. Für jeden Schritt Claude Code nach dem Code fragen, z.B. "Schritt 8 aus 02_forecasting für meine Daten".
