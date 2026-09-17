@@ -217,7 +217,8 @@ mlf = MLForecast(
     freq=FREQ,
     lags=[1, 2, 3, SEASON, 2 * SEASON],
     lag_transforms={1: [RollingMean(window_size=7)]},
-    date_features=["dayofweek", "month"],
+    # kein date_features: Kalender-Features (dow, month, ...) kommen bereits aus Schritt 4 (exog_cols);
+    # doppelte Spaltennamen fuehren beim predict zu einem Feature-Mismatch
 )
 mlf.fit(train_nf, static_features=[])
 pred_ml = mlf.predict(h=HORIZON, X_df=future_exog)
