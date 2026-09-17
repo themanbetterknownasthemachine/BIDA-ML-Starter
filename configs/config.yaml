@@ -2,7 +2,10 @@
 # BIDA ML Starter - Konfiguration
 # =============================================================================
 # Beim Projektstart nur das Noetigste ausfuellen (project.name, tables).
-# Alles andere ergaenzen, wenn es gebraucht wird.
+#
+# Umgebung: "{env}" wird beim Laden durch ML_ENV aus .env ersetzt (DEV, INT oder
+# PROD). Damit zeigt dieselbe Config je nach Umgebung auf DEV_ML / DEV_DATALAKE
+# oder PROD_ML / PROD_DATALAKE. Nie DEV_ oder PROD_ fest eintragen.
 # =============================================================================
 
 project:
@@ -13,19 +16,16 @@ project:
 snowflake:
   role: "ML_DEVELOPER"
   warehouse: "CONSUMER"
-  # Ziel-Datenbank fuer alle Outputs. Wird von SF_DATABASE in .env ueberschrieben:
-  # DEV_ML waehrend der Entwicklung, PROD_ML nach dem Deployment. Schemas sind in beiden gleich.
-  database: "DEV_ML"
+  database: "{env}_ML"           # Ziel fuer alle Outputs des Notebooks
   schemas:
     inference: "INFERENCE"       # Forecasts / Predictions (z.B. FORECAST_SNAPSHOT)
     registry: "REGISTRY"         # Modell-Laeufe, Parameter, Deployment
     monitoring: "MONITORING"     # Metriken, DQ-Checks, Forecast vs. Actual
 
-# Quelltabellen oder Views, voll qualifiziert (DATENBANK.SCHEMA.OBJEKT).
-# Rohdaten liegen in PROD_DATALAKE; die *_90 Views liefern ein rollierendes
-# 90-Tage-Fenster. Beispiel Ruestmengen-Forecast:
-#   training_data: "PROD_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"
+# Quelltabellen oder Views, voll qualifiziert mit {env}. Rohdaten liegen im
+# DATALAKE; die *_90 Views liefern ein rollierendes 90-Tage-Fenster.
+# Beispiel Ruestmengen-Forecast:
+#   training_data: "{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"
+#   actuals:       "{env}_DATALAKE.WAMAS4.PSA_W4_LOGISTIK_RUESTMENGEN_90"
 tables:
-  # Hier den voll qualifizierten Namen der Quell-View eintragen, z.B.:
-  # training_data: "PROD_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"
   training_data: ""

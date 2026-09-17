@@ -1,6 +1,8 @@
 """Snowflake data loader.
 
 Reads credentials from .env and opens one Snowpark session per Python process.
+The target environment (DEV_ML / PROD_ML, DEV_DATALAKE / PROD_DATALAKE) comes from
+ML_ENV in .env via src.config (see configs/config.yaml).
 Set exactly one auth method in .env:
     1. Key-Pair:         SF_PRIVATE_KEY_PATH  (recommended, no MFA prompt)
     2. External Browser: SF_AUTHENTICATOR=externalbrowser  (SSO)
@@ -40,7 +42,14 @@ def _env(name: str, default: str | None = None) -> str | None:
 
 
 def _connection_params() -> dict:
-    """Build Snowpark connection parameters from .env."""
+    """Build Snowpark connection parameters from .env and config.yaml.
+
+    Role, warehouse, database and schema come from config.yaml (resolved for ML_ENV).
+    SF_ROLE / SF_WAREHOUSE / SF_SCHEMA in .env override them if set; the database is
+    deliberately not overridable so that ML_ENV stays the only environment switch.
+    """
+    from src.config import load_config
+
     load_dotenv()
 
     account = _env("ACCOUNT")
@@ -48,13 +57,14 @@ def _connection_params() -> dict:
     if not account or not user:
         raise ValueError("SF_ACCOUNT and SF_USER must be set in .env (see .env.example)")
 
+    sf_cfg = load_config().get("snowflake", {})
     params = {
         "account": account,
         "user": user,
-        "role": _env("ROLE", "ML_DEVELOPER"),
-        "warehouse": _env("WAREHOUSE", "CONSUMER"),
-        "database": _env("DATABASE", "DEV_ML"),
-        "schema": _env("SCHEMA", "INFERENCE"),
+        "role": _env("ROLE") or sf_cfg.get("role", "ML_DEVELOPER"),
+        "warehouse": _env("WAREHOUSE") or sf_cfg.get("warehouse", "CONSUMER"),
+        "database": sf_cfg.get("database"),
+        "schema": _env("SCHEMA") or sf_cfg.get("schemas", {}).get("inference", "INFERENCE"),
     }
 
     private_key_path = _env("PRIVATE_KEY_PATH")
@@ -140,24 +150,23 @@ def write_to_snowflake(
     database: str | None = None,
     overwrite: bool = False,
 ) -> None:
-    """Write a DataFrame to the ML database (default schema: INFERENCE).
+    """Write a DataFrame to the ML database of the current environment (default schema: INFERENCE).
 
-    The target database comes from .env (SF_DATABASE): DEV_ML during development,
-    PROD_ML after deployment. config.yaml only provides the fallback and the schema names.
+    The database is "{env}_ML" from config.yaml, resolved with ML_ENV from .env
+    (DEV_ML in development, PROD_ML after deployment).
     Column names are written unquoted, i.e. Snowflake stores them in UPPER CASE.
 
     Args:
         df: DataFrame to write.
         table_name: Target table name (created automatically if missing).
         schema: Target schema. Default: snowflake.schemas.inference from config.yaml.
-        database: Target database. Default: SF_DATABASE from .env, else config.yaml.
+        database: Target database. Default: snowflake.database from config.yaml ({env}_ML).
         overwrite: If True, replace the table. If False, append rows.
     """
     from src.config import load_config
 
-    load_dotenv()
     sf_cfg = load_config().get("snowflake", {})
-    database = database or _env("DATABASE") or sf_cfg.get("database", "DEV_ML")
+    database = database or sf_cfg.get("database")
     schema = schema or sf_cfg.get("schemas", {}).get("inference", "INFERENCE")
 
     get_session().write_pandas(

@@ -72,12 +72,13 @@ Credentials stehen in `.env` (nicht in Git). Vorlage: `.env.example`.
 ```
 SF_ACCOUNT=pistor.eu-central-1
 SF_USER=dein_user
-SF_ROLE=ML_DEVELOPER
-SF_WAREHOUSE=CONSUMER
-SF_DATABASE=DEV_ML
-SF_SCHEMA=INFERENCE
+ML_ENV=DEV
 SF_PRIVATE_KEY_PATH=~/.snowflake/rsa_key.p8
 ```
+
+Rolle (`ML_DEVELOPER`), Warehouse (`CONSUMER`), Datenbank (`{env}_ML`) und Schema kommen aus
+`configs/config.yaml`; `SF_ROLE`, `SF_WAREHOUSE`, `SF_DATABASE`, `SF_SCHEMA` in `.env` sind nur
+fuer Ausnahmen.
 
 Empfohlen ist Key-Pair-Authentifizierung (kein MFA-Prompt bei jeder Verbindung):
 
@@ -103,13 +104,15 @@ oder `SF_PASSWORD` (mit MFA).
 Aus den Notebooks wird ausschliesslich in die ML-Datenbank geschrieben. Den Rueckfluss ins DWH und nach
 Power BI uebernimmt das DWH-Team.
 
-Umgebungen: Bis zum Deployment gibt es nur `DEV_ML` (gleiche Schemas). Welche Datenbank Ziel ist,
-steuert allein `SF_DATABASE` in `.env` (`DEV_ML` heute, `PROD_ML` nach dem Deployment). Code, Config
-und Skills bleiben unveraendert.
+Umgebungen: `ML_ENV` in `.env` (`DEV`, `INT` oder `PROD`) ist der einzige Schalter. `configs/config.yaml`
+verwendet Vorlagen wie `"{env}_ML"` und `"{env}_DATALAKE.MSACCESS.PSA_..._90"`, die beim Laden aufgeloest
+werden. Auf Laptops steht `ML_ENV=DEV`; bis zum Deployment existiert ohnehin nur `DEV_ML`. Code, Config
+und Skills bleiben in allen Umgebungen identisch.
 
 ## Arbeiten mit dem Template
 
-1. Quelltabelle in `configs/config.yaml` unter `tables.training_data` eintragen (voll qualifiziert).
+1. Quelltabelle in `configs/config.yaml` unter `tables.training_data` eintragen, voll qualifiziert und mit
+   `{env}` statt `DEV_`/`PROD_`, z.B. `"{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"`.
 2. Eigenes Arbeits-Notebook anlegen, z.B. `notebooks/work_<projekt>.ipynb`.
 3. Passendes Template-Notebook oeffnen (`01_` bis `04_`) und Schritt fuer Schritt durchgehen.
 4. Fuer jeden Schritt Claude Code nach dem Code fragen, z.B. "Schritt 8 aus 02_forecasting fuer meine Daten".

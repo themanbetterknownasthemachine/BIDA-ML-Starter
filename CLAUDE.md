@@ -53,9 +53,11 @@ BIDA-ML-Starter/
 | Ziel | `PROD_ML.MONITORING` | Metriken und DQ-Checks (`MODEL_EVALUATION_LOG`, `DQ_CHECK_LOG`, `V_FORECAST_VS_ACTUAL`) |
 
 - Rolle `ML_DEVELOPER`, Warehouse `CONSUMER` (Defaults in `configs/config.yaml` und `.env.example`).
-- **Umgebungen:** Bis zum Deployment existiert nur `DEV_ML` (gleiche Schemas wie `PROD_ML`).
-  Die Ziel-Datenbank steuert ausschliesslich `SF_DATABASE` in `.env`; Code und Config bleiben gleich.
-  `PROD_ML` in dieser Datei meint immer "die ML-Datenbank der jeweiligen Umgebung".
+- **Umgebungen (DEV / INT / PROD):** Einziger Schalter ist `ML_ENV` in `.env`. `configs/config.yaml`
+  enthaelt Vorlagen mit `{env}` (`{env}_ML`, `{env}_DATALAKE...`), die `load_config()` aufloest.
+  Auf Laptops immer `DEV` (heute existiert nur `DEV_ML`; `PROD_ML` kommt mit dem Deployment).
+  Nie `DEV_ML` oder `PROD_ML` fest in Code, Config oder Notebooks schreiben; `PROD_ML` in dieser
+  Datei meint "die ML-Datenbank der jeweiligen Umgebung".
 - `PROD_ML` ist bewusst vom Data-Vault-Modell getrennt. Aus dem Notebook wird **nur nach PROD_ML** geschrieben.
   Der Rueckfluss ins DWH (`PROD_LANDING.ML` -> `PROD_DATALAKE.ML` -> `PROD_CONSUMPTION`) und Power BI liegen beim DWH-Team.
 - Kein Schreiben nach `PROD_DATALAKE`, `PROD_LANDING` oder `PROD_CONSUMPTION`.
@@ -112,7 +114,8 @@ conda env create -f environment.yml && conda activate bida-ml
 
 ## Workflow-Regeln
 
-- Daten laden ueber `src.data_loader` (`load_query`, `load_table`, `load_timeseries`); Tabellennamen aus `configs/config.yaml`.
+- Daten laden ueber `src.data_loader` (`load_query`, `load_table`, `load_timeseries`); Tabellennamen aus `configs/config.yaml`
+  (mit `{env}`-Platzhalter, z.B. `"{env}_DATALAKE.MSACCESS.PSA_..._90"`).
 - Ergebnisse mit `write_to_snowflake(df, "TABELLE", schema=...)` nach `PROD_ML` schreiben (append, nicht overwrite),
   immer mit `run_id`, Modellname, Version und Zeitstempel.
 - Trainierte Modelle unter `models/<name>_v<n>_<datum>/` speichern (nicht in Git).
