@@ -1,9 +1,13 @@
 {
   "permissions": {
     "allow": ["Bash(uv sync*)", "Bash(uv lock*)", "Bash(uv export*)", "Bash(uv run *)", "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)"],
-    "deny": ["Read(./.env)", "Read(~/.snowflake/**)", "Read(**/*.p8)", "Read(**/*.pem)"]
+    "deny": ["Read(./.env)", "Read(~/.snowflake/**)", "Read(**/*.p8)", "Read(**/*.pem)", "Read(**/*.key)", "Edit(./.env)", "Edit(**/*.p8)", "Edit(**/*.pem)", "Edit(**/*.key)", "Bash(git push:*)"]
   },
   "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash|Edit|Write|NotebookEdit|mcp__.*",
+      "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-files.sh\"" }]
+    }],
     "PostToolUse": [{
       "matcher": "Edit|Write",
       "hooks": [{ "type": "command", "command": "uv run --no-sync ruff format src tests >/dev/null 2>&1; uv run --no-sync ruff check --fix src tests >/dev/null 2>&1; exit 0" }]
