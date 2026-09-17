@@ -135,16 +135,23 @@ Die Template-Notebooks enthalten nur Text (Anleitung), keinen Code. Einzige Ausn
 BIDA-ML-Starter/
 ├── CLAUDE.md                 # Instruktionen fuer Claude Code
 ├── README.md                 # Diese Datei
-├── pyproject.toml, uv.lock   # Dependencies (uv)
-├── environment.yml, requirements.txt  # Dependencies (conda)
+├── pyproject.toml, uv.lock   # Dependencies (uv); Extras cpu / gpu
+├── environment.yml, requirements.txt  # Dependencies (conda, aus uv.lock exportiert)
+├── .python-version           # 3.12
 ├── .pre-commit-config.yaml   # ruff + nbstripout
-├── .env.example              # Snowflake Credentials Vorlage
-├── .claude/                  # Skills, Rules und Team-Settings fuer Claude Code
-├── configs/config.yaml       # Zentrale Konfiguration
-├── sql/                      # Berechtigungen (Referenz fuer Admins)
-├── notebooks/                # Template-Notebooks (Anleitungen)
+├── .env.example              # Snowflake Credentials Vorlage (.env liegt daneben, nicht in Git)
+├── .claude/
+│   ├── settings.json         # Permissions und Hooks (Team, committet)
+│   ├── skills/               # forecasting, classification, regression (Code-Referenz)
+│   ├── rules/                # security (immer), notebooks, python (pfadbezogen)
+│   ├── hooks/                # protect-files.sh: blockt Credential-Zugriff und destruktives SQL
+│   └── agents/               # code-reviewer, security-reviewer (read-only)
+├── configs/config.yaml       # Zentrale Konfiguration ({env}-Vorlagen, Quelltabellen)
+├── sql/                      # Berechtigungen der Rolle ML_DEVELOPER (Referenz fuer Admins)
+├── notebooks/                # Template-Notebooks (Anleitungen), 00 = Smoke-Test
 ├── src/                      # config.py + data_loader.py
 ├── tests/                    # Unit Tests
+├── docs/                     # Zusaetzliche Dokumentation
 ├── data/                     # Lokale Daten (nicht in Git)
 ├── models/                   # Trainierte Modelle (nicht in Git)
 └── reports/figures/          # Plots, Metriken

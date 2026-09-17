@@ -24,7 +24,9 @@ BIDA-ML-Starter/
 ├── .claude/
 │   ├── settings.json             -> Team-Settings (Permissions, Hooks)
 │   ├── skills/<name>/SKILL.md    -> forecasting, classification, regression (Code-Referenz)
-│   └── rules/                    -> Pfadbezogene Regeln (notebooks, python)
+│   ├── rules/                    -> security (immer), notebooks, python (pfadbezogen)
+│   ├── hooks/                    -> protect-files.sh: blockt Credential-Zugriff und destruktives SQL
+│   └── agents/                   -> code-reviewer, security-reviewer (read-only)
 ├── configs/config.yaml           -> Zentrale Konfiguration (Snowflake-Ziel, Quelltabellen, Seeds)
 ├── sql/01_ml_developer_grants.sql -> Berechtigungen der Rolle ML_DEVELOPER (Referenz fuer Admins)
 ├── notebooks/
