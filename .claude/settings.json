@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": ["Bash(uv sync*)", "Bash(uv lock*)", "Bash(uv export*)", "Bash(uv run *)", "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)"],
+    "deny": ["Read(./.env)", "Read(~/.snowflake/**)", "Read(**/*.p8)", "Read(**/*.pem)"]
+  },
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Edit|Write",
+      "hooks": [{ "type": "command", "command": "uv run --no-sync ruff format src tests >/dev/null 2>&1; uv run --no-sync ruff check --fix src tests >/dev/null 2>&1; exit 0" }]
+    }]
+  }
+}

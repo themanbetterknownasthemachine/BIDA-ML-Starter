@@ -1,135 +1,107 @@
-"""Data loader — connects to Snowflake automatically.
+"""Snowflake data loader.
 
-Detects environment and chooses the right connection method:
-- Snowflake Container Runtime: get_active_session() (automatic)
-- VM/lokal: reads .env and connects via one of three methods:
-    1. External Browser (SSO) — easiest for teams, set SF_AUTHENTICATOR=externalbrowser
-    2. Key-Pair — best for automation/VMs, set SF_PRIVATE_KEY_PATH
-    3. Password + MFA — fallback, set SF_PASSWORD (will prompt for MFA if required)
+Reads credentials from .env and opens one Snowpark session per Python process.
+Set exactly one auth method in .env:
+    1. Key-Pair:         SF_PRIVATE_KEY_PATH  (recommended, no MFA prompt)
+    2. External Browser: SF_AUTHENTICATOR=externalbrowser  (SSO)
+    3. Password:         SF_PASSWORD  (may trigger an MFA prompt)
 """
 
 import os
+from pathlib import Path
+
 import pandas as pd
+from dotenv import load_dotenv
+
+_SESSION = None
+
+
+def _load_private_key(path: str) -> bytes:
+    """Read a PEM private key and return it as DER bytes for the connector."""
+    from cryptography.hazmat.primitives import serialization
+
+    key_path = Path(path).expanduser()
+    with open(key_path, "rb") as f:
+        private_key = serialization.load_pem_private_key(f.read(), password=None)
+    return private_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+
+def _env(name: str, default: str | None = None) -> str | None:
+    """Read SF_<name> from the environment, falling back to SNOWFLAKE_<name>.
+
+    SF_* is the convention of this repo; SNOWFLAKE_* is what the
+    Agentic-Engineering-Starter-Template uses in its .env.example.
+    """
+    return os.getenv(f"SF_{name}") or os.getenv(f"SNOWFLAKE_{name}") or default
+
+
+def _connection_params() -> dict:
+    """Build Snowpark connection parameters from .env."""
+    load_dotenv()
+
+    account = _env("ACCOUNT")
+    user = _env("USER")
+    if not account or not user:
+        raise ValueError("SF_ACCOUNT and SF_USER must be set in .env (see .env.example)")
+
+    params = {
+        "account": account,
+        "user": user,
+        "role": _env("ROLE", "ML_DEVELOPER"),
+        "warehouse": _env("WAREHOUSE", "CONSUMER"),
+        "database": _env("DATABASE", "PROD_ML"),
+        "schema": _env("SCHEMA", "INFERENCE"),
+    }
+
+    private_key_path = _env("PRIVATE_KEY_PATH")
+    authenticator = (_env("AUTHENTICATOR") or "").lower()
+    password = _env("PASSWORD")
+
+    if private_key_path:
+        params["private_key"] = _load_private_key(private_key_path)
+    elif authenticator == "externalbrowser":
+        params["authenticator"] = "externalbrowser"
+    elif password:
+        params["password"] = password
+    else:
+        raise ValueError(
+            "No auth method configured in .env. Set one of:\n"
+            "  SF_PRIVATE_KEY_PATH=~/.snowflake/rsa_key.p8  (recommended)\n"
+            "  SF_AUTHENTICATOR=externalbrowser             (SSO)\n"
+            "  SF_PASSWORD=...                              (may require MFA)"
+        )
+    return params
 
 
 def get_session():
-    """Get a Snowflake session. Auto-detects environment.
-
-    In Snowflake Container Runtime: uses get_active_session().
-    In VM/lokal: reads credentials from .env file.
+    """Return the shared Snowpark session, creating it on first call.
 
     Returns:
         snowflake.snowpark.Session
     """
-    # Try Snowflake Container Runtime first
-    try:
-        from snowflake.snowpark.context import get_active_session
-        session = get_active_session()
-        return session
-    except Exception:
-        pass
+    global _SESSION
+    if _SESSION is None:
+        from snowflake.snowpark import Session
 
-    # Fall back to local connection via .env
-    from dotenv import load_dotenv
-    load_dotenv()
-
-    account = os.getenv("SF_ACCOUNT")
-    user = os.getenv("SF_USER")
-    role = os.getenv("SF_ROLE", "ROLE_DS")
-    warehouse = os.getenv("SF_WAREHOUSE", "ML_WH")
-    database = os.getenv("SF_DATABASE", "ML_DB")
-    schema = os.getenv("SF_SCHEMA", "DATA")
-    authenticator = os.getenv("SF_AUTHENTICATOR", "").lower()
-    private_key_path = os.getenv("SF_PRIVATE_KEY_PATH", "")
-
-    if not account or not user:
-        raise ValueError("SF_ACCOUNT and SF_USER must be set in .env")
-
-    from snowflake.snowpark import Session
-
-    # Method 1: External Browser (SSO) — easiest for teams
-    if authenticator == "externalbrowser":
-        session = Session.builder.configs({
-            "account": account,
-            "user": user,
-            "authenticator": "externalbrowser",
-            "role": role,
-            "warehouse": warehouse,
-            "database": database,
-            "schema": schema,
-        }).create()
-        return session
-
-    # Method 2: Key-Pair — best for automation
-    if private_key_path:
-        from cryptography.hazmat.backends import default_backend
-        from cryptography.hazmat.primitives import serialization
-
-        key_path = os.path.expanduser(private_key_path)
-        with open(key_path, "rb") as f:
-            private_key = serialization.load_pem_private_key(
-                f.read(), password=None, backend=default_backend()
-            )
-        private_key_bytes = private_key.private_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        )
-        session = Session.builder.configs({
-            "account": account,
-            "user": user,
-            "private_key": private_key_bytes,
-            "role": role,
-            "warehouse": warehouse,
-            "database": database,
-            "schema": schema,
-        }).create()
-        return session
-
-    # Method 3: Password (may trigger MFA prompt)
-    password = os.getenv("SF_PASSWORD")
-    if not password:
-        raise ValueError(
-            "No auth method configured in .env. Set one of:\n"
-            "  SF_AUTHENTICATOR=externalbrowser  (easiest)\n"
-            "  SF_PRIVATE_KEY_PATH=~/.snowflake/snowflake_key.p8  (automation)\n"
-            "  SF_PASSWORD=...  (may require MFA)"
-        )
-
-    session = Session.builder.configs({
-        "account": account,
-        "user": user,
-        "password": password,
-        "role": role,
-        "warehouse": warehouse,
-        "database": database,
-        "schema": schema,
-    }).create()
-    return session
+        _SESSION = Session.builder.configs(_connection_params()).create()
+    return _SESSION
 
 
 def load_query(query: str) -> pd.DataFrame:
-    """Run a SQL query and return results as DataFrame.
+    """Run a SQL query and return the result as a DataFrame."""
+    return get_session().sql(query).to_pandas()
+
+
+def load_table(table_name: str, limit: int | None = None) -> pd.DataFrame:
+    """Load a table or view as DataFrame.
 
     Args:
-        query: SQL query string.
-
-    Returns:
-        pandas DataFrame with query results.
-    """
-    session = get_session()
-    return session.sql(query).to_pandas()
-
-
-def load_table(table_name: str, limit: int = None) -> pd.DataFrame:
-    """Load a full table as DataFrame.
-
-    Args:
-        table_name: Fully qualified table name (e.g. 'ML_DB.DATA.MY_TABLE').
+        table_name: Fully qualified name (e.g. 'PROD_DATALAKE.MSACCESS.MY_VIEW').
         limit: Optional row limit.
-
-    Returns:
-        pandas DataFrame.
     """
     query = f"SELECT * FROM {table_name}"
     if limit:
@@ -137,20 +109,17 @@ def load_table(table_name: str, limit: int = None) -> pd.DataFrame:
     return load_query(query)
 
 
-def load_timeseries(table_name: str = None, unique_id: str = None) -> pd.DataFrame:
-    """Load time series data in [unique_id, ds, y] format.
+def load_timeseries(table_name: str | None = None, unique_id: str | None = None) -> pd.DataFrame:
+    """Load time series data in [unique_id, ds, y] format (columns lowercased).
 
     Args:
-        table_name: Table to load. If None, reads from config.yaml.
-        unique_id: Filter to a specific series (e.g. 'kategorie_a').
-
-    Returns:
-        pandas DataFrame with columns unique_id, ds, y.
+        table_name: Table or view to load. If None, uses tables.training_data from config.yaml.
+        unique_id: Optional filter to a single series.
     """
     if table_name is None:
         from src.config import load_config
-        cfg = load_config()
-        table_name = cfg.get("tables", {}).get("training_data")
+
+        table_name = load_config().get("tables", {}).get("training_data")
         if not table_name:
             raise ValueError("No table configured. Set tables.training_data in configs/config.yaml")
 
@@ -167,34 +136,35 @@ def load_timeseries(table_name: str = None, unique_id: str = None) -> pd.DataFra
 def write_to_snowflake(
     df: pd.DataFrame,
     table_name: str,
-    database: str = None,
-    schema: str = None,
+    schema: str | None = None,
+    database: str | None = None,
     overwrite: bool = False,
 ) -> None:
-    """Write a DataFrame to Snowflake.
+    """Write a DataFrame to PROD_ML (default schema: INFERENCE).
+
+    Column names are written unquoted, i.e. Snowflake stores them in UPPER CASE.
 
     Args:
-        df: pandas DataFrame to write.
-        table_name: Target table name.
-        database: Database (default: from config).
-        schema: Schema (default: results_schema from config).
-        overwrite: If True, replace table. If False, append.
+        df: DataFrame to write.
+        table_name: Target table name (created automatically if missing).
+        schema: Target schema. Default: snowflake.schemas.inference from config.yaml.
+        database: Target database. Default: snowflake.database from config.yaml.
+        overwrite: If True, replace the table. If False, append rows.
     """
-    if database is None or schema is None:
-        from src.config import load_config
-        cfg = load_config()
-        sf_cfg = cfg.get("snowflake", {})
-        database = database or sf_cfg.get("database", "ML_DB")
-        schema = schema or sf_cfg.get("results_schema", "INFERENCE")
+    from src.config import load_config
 
-    session = get_session()
-    session.write_pandas(
+    sf_cfg = load_config().get("snowflake", {})
+    database = database or sf_cfg.get("database", "PROD_ML")
+    schema = schema or sf_cfg.get("schemas", {}).get("inference", "INFERENCE")
+
+    get_session().write_pandas(
         df,
         table_name=table_name,
         database=database,
         schema=schema,
         auto_create_table=True,
         overwrite=overwrite,
+        quote_identifiers=False,
     )
-    mode = "überschrieben" if overwrite else "angehängt"
-    print(f"{len(df)} Zeilen nach {database}.{schema}.{table_name} {mode}.")
+    mode = "replaced" if overwrite else "appended"
+    print(f"{len(df)} rows written to {database}.{schema}.{table_name} ({mode}).")

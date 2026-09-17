@@ -1,0 +1,21 @@
+# =============================================================================
+# BIDA ML Starter - Conda Environment
+# =============================================================================
+# Installiert dieselben Versionen wie uv (requirements.txt wird aus uv.lock
+# exportiert: uv export --no-hashes --group dev -o requirements.txt).
+#
+#   conda env create -f environment.yml
+#   conda activate bida-ml
+#
+# GPU (NVIDIA, CUDA 13.0):
+#   pip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu130
+# =============================================================================
+
+name: bida-ml
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -r requirements.txt

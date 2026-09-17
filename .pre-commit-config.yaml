@@ -1,0 +1,19 @@
+# Einmalig aktivieren: uv run pre-commit install
+# Manuell auf alle Dateien: uv run pre-commit run --all-files
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  # Als lokaler Hook mit "python -m", weil Launcher-EXEs (nbstripout.exe) auf den Firmen-Notebooks blockiert sind
+  - repo: local
+    hooks:
+      - id: nbstripout
+        name: nbstripout
+        entry: python -m nbstripout
+        language: python
+        additional_dependencies: [nbstripout==0.9.1]
+        types: [jupyter]

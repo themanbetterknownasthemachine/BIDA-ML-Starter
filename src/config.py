@@ -27,7 +27,7 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
         Parsed config dictionary.
     """
     config_path = Path(path) if path else _find_config_path()
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

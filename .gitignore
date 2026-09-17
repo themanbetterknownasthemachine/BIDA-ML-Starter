@@ -1,5 +1,5 @@
 # =============================================================================
-# BIDA ML Starter — .gitignore
+# BIDA ML Starter - .gitignore
 # =============================================================================
 
 # Python
@@ -30,6 +30,12 @@ Thumbs.db
 
 # Environment & Secrets
 .env
+*.p8
+*.pem
+
+# Claude Code (persoenliche Overrides, nicht im Team teilen)
+.claude/settings.local.json
+CLAUDE.local.md
 
 # Data (zu gross für Git)
 data/raw/*
@@ -47,8 +53,7 @@ models/*
 # reports/figures/*
 # !reports/figures/.gitkeep
 
-# uv Lock (VM-Umgebung — committen!)
-# uv.lock
+# uv.lock und requirements.txt werden committet (reproduzierbare Umgebung)
 
 # Logs
 *.log

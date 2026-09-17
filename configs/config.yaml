@@ -1,8 +1,8 @@
 # =============================================================================
-# BIDA ML Starter — Konfiguration
+# BIDA ML Starter - Konfiguration
 # =============================================================================
-# Beim Projektstart nur das Nötigste ausfüllen.
-# Alles andere ergänzen, wenn es gebraucht wird.
+# Beim Projektstart nur das Noetigste ausfuellen (project.name, tables).
+# Alles andere ergaenzen, wenn es gebraucht wird.
 # =============================================================================
 
 project:
@@ -11,11 +11,17 @@ project:
   random_state: 42
 
 snowflake:
-  database: "ML_DB"
-  schema: "DATA"
-  warehouse: "ML_WH"
-  results_schema: "INFERENCE"
+  role: "ML_DEVELOPER"
+  warehouse: "CONSUMER"
+  database: "PROD_ML"            # Ziel fuer alle Outputs des Notebooks
+  schemas:
+    inference: "INFERENCE"       # Forecasts / Predictions (z.B. FORECAST_SNAPSHOT)
+    registry: "REGISTRY"         # Modell-Laeufe, Parameter, Deployment
+    monitoring: "MONITORING"     # Metriken, DQ-Checks, Forecast vs. Actual
 
-# Tabelle ergänzen, sobald bekannt:
-# tables:
-#   training_data: "ML_DB.DATA.MEINE_TABELLE"
+# Quelltabellen oder Views, voll qualifiziert (DATENBANK.SCHEMA.OBJEKT).
+# Rohdaten liegen in PROD_DATALAKE; die *_90 Views liefern ein rollierendes
+# 90-Tage-Fenster. Beispiel Ruestmengen-Forecast:
+#   training_data: "PROD_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"
+tables:
+  training_data: ""
