@@ -1,6 +1,6 @@
 ---
 name: forecasting
-description: Code für Zeitreihen-Forecasting im BIDA ML Starter (Baseline, StatsForecast, MLForecast/LightGBM, NeuralForecast, Evaluation, Schreiben nach PROD_ML). Nutzen, wenn der User einen Schritt aus notebooks/02_forecasting.ipynb umsetzt oder nach Forecast-Code fragt.
+description: Code für Zeitreihen-Forecasting im BIDA ML Starter (Baseline, StatsForecast, MLForecast/LightGBM, NeuralForecast, Evaluation, Schreiben nach {env}_ML). Nutzen, wenn der User einen Schritt aus notebooks/02_forecasting.ipynb umsetzt oder nach Forecast-Code fragt.
 ---
 
 # Forecasting Skill
@@ -13,8 +13,8 @@ für einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users gesc
 - **Daten:** Zeitreihen aus Snowflake im Format `[unique_id, ds, y]` (+ optionale exogene Spalten).
   Quelle ist frei: Snowflake (`tables.training_data` in `configs/config.yaml`, laden mit `load_timeseries()`)
   oder Datei aus `data/raw/` (`pd.read_csv` usw.), danach auf `[unique_id, ds, y]` umbenennen.
-- **Ziel:** Forecasts nach `PROD_ML.INFERENCE`, Laufinfos nach `PROD_ML.REGISTRY`,
-  Metriken nach `PROD_ML.MONITORING` (siehe `write_to_snowflake`).
+- **Ziel:** Forecasts nach `{env}_ML.INFERENCE`, Laufinfos nach `{env}_ML.REGISTRY`,
+  Metriken nach `{env}_ML.MONITORING` (siehe `write_to_snowflake`).
 - **Ansatz:** Von einfach zu komplex. Baseline ist Pflicht. Der User entscheidet, welche Modelle er testet.
 - **src/ enthält nur** `config.py` und `data_loader.py`; alles andere wird im Notebook geschrieben.
 - **GPU:** NeuralForecast nutzt automatisch CUDA, wenn `torch.cuda.is_available()`.
@@ -404,13 +404,13 @@ future_df = pd.MultiIndex.from_product(
 future_df = add_calendar_features(future_df)[["unique_id", "ds"] + exog_cols]
 forecast = nf_final.predict(futr_df=future_df).rename(columns={"NHITS": "forecast"})
 
-# 1. Forecast -> PROD_ML.INFERENCE
+# 1. Forecast -> {env}_ML.INFERENCE
 snapshot = forecast.assign(
     run_id=RUN_ID, model_name=MODEL_NAME, model_version=MODEL_VERSION, created_at=pd.Timestamp.now()
 )
 write_to_snowflake(snapshot, "FORECAST_SNAPSHOT")
 
-# 2. Lauf -> PROD_ML.REGISTRY
+# 2. Lauf -> {env}_ML.REGISTRY
 run_info = pd.DataFrame(
     [
         {
@@ -427,7 +427,7 @@ run_info = pd.DataFrame(
 )
 write_to_snowflake(run_info, "MODEL_RUNS", schema=cfg["snowflake"]["schemas"]["registry"])
 
-# 3. Metriken -> PROD_ML.MONITORING
+# 3. Metriken -> {env}_ML.MONITORING
 metrics = (
     comparison.reset_index()
     .rename(columns={"index": "model"})
@@ -446,6 +446,6 @@ write_to_snowflake(
 - Exogene Features: nur verwenden, was in der Zukunft bekannt ist (Kalender, Feiertage, geplante Aktionen).
 - Lag-Features nie aus der Zukunft (kein Data Leakage).
 - `random_state` / `random_seed` immer 42 (`RANDOM_STATE`).
-- Ergebnisse immer nach PROD_ML schreiben (append, nicht overwrite), mit `run_id`, Modellname und Version.
+- Ergebnisse immer nach {env}_ML schreiben (append, nicht overwrite), mit `run_id`, Modellname und Version.
 - Code direkt im Arbeits-Notebook, nicht in `src/`.
 - Notebook-Text auf Deutsch, Code auf Englisch.

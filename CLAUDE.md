@@ -7,8 +7,8 @@ Pistor BIDA ML Starter: Template für reproduzierbare Machine-Learning-Projekte
 
 - Gearbeitet wird **lokal** (Windows-Notebook, optional NVIDIA-GPU) oder auf einer Linux-VM via Remote-SSH,
   in VS Code mit Claude Code.
-- **Datenquelle ist frei wählbar:** Snowflake (häufig Views in `PROD_DATALAKE`), Dateien (CSV, Excel, Parquet
-  in `data/raw/`) oder andere Systeme. **Ziel ist immer Snowflake:** die ML-Datenbank `PROD_ML`.
+- **Datenquelle ist frei wählbar:** Snowflake (häufig Views in `{env}_DATALAKE`), Dateien (CSV, Excel, Parquet
+  in `data/raw/`) oder andere Systeme. **Ziel ist immer Snowflake:** die ML-Datenbank `{env}_ML`.
 - Environment mit `uv` (empfohlen) oder `conda`; beide installieren dieselben Versionen.
   Auf Geschäftsnotebooks ohne Installationsrechte: vorbereiteter WinPython-Ordner (Python 3.13, siehe unten).
 
@@ -51,20 +51,21 @@ BIDA-ML-Starter/
 
 | Bereich | Objekt | Zweck |
 |---------|--------|-------|
-| Quelle (optional, nur lesen) | z.B. `PROD_DATALAKE.<QUELLE>.PSA_*` und `*_90` Views | Häufigster Fall: historisierte Rohdaten, `_90` = rollierendes 90-Tage-Fenster. Andere Quellen sind zulässig |
-| Ziel | `PROD_ML.INFERENCE` | Forecasts / Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
-| Ziel | `PROD_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment (`MODEL_RUNS`, `MODEL_COEFFICIENTS`, `MODEL_DEPLOYMENT`) |
-| Ziel | `PROD_ML.MONITORING` | Metriken und DQ-Checks (`MODEL_EVALUATION_LOG`, `DQ_CHECK_LOG`, `V_FORECAST_VS_ACTUAL`) |
+| Quelle (optional, nur lesen) | z.B. `{env}_DATALAKE.<QUELLE>.PSA_*` und `*_90` Views | Häufigster Fall: historisierte Rohdaten, `_90` = rollierendes 90-Tage-Fenster. Andere Quellen sind zulässig |
+| Ziel | `{env}_ML.INFERENCE` | Forecasts / Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
+| Ziel | `{env}_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment (`MODEL_RUNS`, `MODEL_COEFFICIENTS`, `MODEL_DEPLOYMENT`) |
+| Ziel | `{env}_ML.MONITORING` | Metriken und DQ-Checks (`MODEL_EVALUATION_LOG`, `DQ_CHECK_LOG`, `V_FORECAST_VS_ACTUAL`) |
 
 - Rolle `ML_DEVELOPER`, Warehouse `CONSUMER` (Defaults in `configs/config.yaml` und `.env.example`).
 - **Umgebungen (DEV / INT / PROD):** Einziger Schalter ist `ML_ENV` in `.env`. `configs/config.yaml`
   enthält Vorlagen mit `{env}` (`{env}_ML`, `{env}_DATALAKE...`), die `load_config()` auflöst.
-  Auf Laptops immer `DEV` (heute existiert nur `DEV_ML`; `PROD_ML` kommt mit dem Deployment).
-  Nie `DEV_ML` oder `PROD_ML` fest in Code, Config oder Notebooks schreiben; `PROD_ML` in dieser
+  Ablauf: entwickelt wird in `DEV`, getestet in `INT`. Nach `PROD` schreibt erst das offizielle
+  Deployment, nie ein Notebook. Auf Laptops steht `ML_ENV=DEV` (heute existiert nur `DEV_ML`).
+  Nie `DEV_ML`, `INT_ML` oder `PROD_ML` fest in Code, Config oder Notebooks schreiben; `{env}_ML` in dieser
   Datei meint "die ML-Datenbank der jeweiligen Umgebung".
-- `PROD_ML` ist bewusst vom Data-Vault-Modell getrennt. Aus dem Notebook wird **nur nach PROD_ML** geschrieben.
-  Der Rückfluss ins DWH (`PROD_LANDING.ML` -> `PROD_DATALAKE.ML` -> `PROD_CONSUMPTION`) und Power BI liegen beim DWH-Team.
-- Kein Schreiben nach `PROD_DATALAKE`, `PROD_LANDING` oder `PROD_CONSUMPTION`.
+- `{env}_ML` ist bewusst vom Data-Vault-Modell getrennt. Aus dem Notebook wird **nur nach {env}_ML** geschrieben.
+  Der Rückfluss ins DWH (`{env}_LANDING.ML` -> `{env}_DATALAKE.ML` -> `{env}_CONSUMPTION`) und Power BI liegen beim DWH-Team.
+- Kein Schreiben nach `{env}_DATALAKE`, `{env}_LANDING` oder `{env}_CONSUMPTION`.
 
 ## Konzept
 
@@ -138,7 +139,7 @@ python -m nbstripout notebooks/*.ipynb   # vor jedem Commit, ersetzt pre-commit
 
 - Daten laden über `src.data_loader` (`load_query`, `load_table`, `load_timeseries`); Tabellennamen aus `configs/config.yaml`
   (mit `{env}`-Platzhalter, z.B. `"{env}_DATALAKE.MSACCESS.PSA_..._90"`).
-- Ergebnisse mit `write_to_snowflake(df, "TABELLE", schema=...)` nach `PROD_ML` schreiben (append, nicht overwrite),
+- Ergebnisse mit `write_to_snowflake(df, "TABELLE", schema=...)` nach `{env}_ML` schreiben (append, nicht overwrite),
   immer mit `run_id`, Modellname, Version und Zeitstempel.
 - Trainierte Modelle unter `models/<name>_v<n>_<datum>/` speichern (nicht in Git).
 - Metriken und Plots nach `reports/figures/`.
@@ -159,7 +160,7 @@ python -m nbstripout notebooks/*.ipynb   # vor jedem Commit, ersetzt pre-commit
 4. Baseline-Modell (jedes ML-Modell muss die Baseline schlagen)
 5. Cross-Validation
 6. Evaluation auf dem Test-Set mit Visualisierung
-7. Ergebnisse nach PROD_ML schreiben
+7. Ergebnisse nach {env}_ML schreiben
 
 ### Metriken
 | Forecasting | Klassifikation | Regression |
@@ -184,5 +185,5 @@ python -m nbstripout notebooks/*.ipynb   # vor jedem Commit, ersetzt pre-commit
 - Baseline zuerst, dann komplexere Modelle.
 - GPU: NeuralForecast/PyTorch nutzen CUDA automatisch; mit `torch.cuda.is_available()` prüfen.
 - `.env` und Private Keys nie lesen oder ausgeben.
-- Ergebnisse immer nach PROD_ML schreiben; nichts nach PROD_DATALAKE / PROD_CONSUMPTION.
+- Ergebnisse immer nach {env}_ML schreiben; nichts nach {env}_DATALAKE / {env}_CONSUMPTION.
 - Notebook-Text auf Deutsch, Code auf Englisch.

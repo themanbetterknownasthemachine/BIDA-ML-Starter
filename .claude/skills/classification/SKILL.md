@@ -1,6 +1,6 @@
 ---
 name: classification
-description: Code für Klassifikation im BIDA ML Starter (sklearn Pipelines, LightGBM/XGBoost, stratified CV, Tuning, Evaluation mit ROC/PR, SHAP, Schreiben nach PROD_ML). Nutzen, wenn der User einen Schritt aus notebooks/03_classification.ipynb umsetzt.
+description: Code für Klassifikation im BIDA ML Starter (sklearn Pipelines, LightGBM/XGBoost, stratified CV, Tuning, Evaluation mit ROC/PR, SHAP, Schreiben nach {env}_ML). Nutzen, wenn der User einen Schritt aus notebooks/03_classification.ipynb umsetzt.
 ---
 
 # Classification Skill
@@ -12,7 +12,7 @@ für einzelne Schritte. Code wird in ein eigenes Arbeits-Notebook des Users gesc
 
 - **Daten:** Quelle ist frei. Snowflake-Tabelle oder View (voll qualifizierter Name in `configs/config.yaml`,
   laden mit `load_table`) oder Datei aus `data/raw/` (`pd.read_csv`, `pd.read_excel`, `pd.read_parquet`).
-- **Ziel:** Predictions nach `PROD_ML.INFERENCE`, Metriken nach `PROD_ML.MONITORING`.
+- **Ziel:** Predictions nach `{env}_ML.INFERENCE`, Metriken nach `{env}_ML.MONITORING`.
 - **src/ enthält nur** `config.py` und `data_loader.py`; alles andere wird im Notebook geschrieben.
 
 ## Code-Referenz nach Schritt
@@ -222,5 +222,5 @@ write_to_snowflake(
 - ROC-AUC und PR-AUC immer beide zeigen.
 - Baseline (`DummyClassifier`) ist Pflicht.
 - `random_state` immer 42 (`RANDOM_STATE`).
-- Ergebnisse nach PROD_ML schreiben, Code direkt im Arbeits-Notebook.
+- Ergebnisse nach {env}_ML schreiben, Code direkt im Arbeits-Notebook.
 - Notebook-Text auf Deutsch, Code auf Englisch.

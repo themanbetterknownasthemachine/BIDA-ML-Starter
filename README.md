@@ -4,8 +4,10 @@ Standardisiertes ML-Template für das Pistor BI & Data Analytics Team.
 Einsetzbar für Forecasting, Klassifikation, Regression und weitere ML-Aufgaben.
 
 Das Projekt wird lokal geklont (Windows-Notebook, optional mit NVIDIA-GPU) oder auf einer Linux-VM
-via Remote-SSH genutzt. Die Datenquelle ist frei wählbar (Snowflake, CSV, Excel, Parquet, andere Systeme);
-Ziel für alle Ergebnisse ist die ML-Datenbank in Snowflake (`PROD_ML`).
+via Remote-SSH genutzt. Auf Geschäftsnotebooks ohne Installationsrechte läuft es mit einem vorbereiteten
+WinPython-Ordner statt `uv` (siehe [Setup mit WinPython](#setup-mit-winpython)). Die Datenquelle ist frei wählbar (Snowflake, CSV, Excel, Parquet, andere Systeme);
+Ziel für alle Ergebnisse ist die ML-Datenbank in Snowflake (`{env}_ML`): Entwickelt wird in `DEV_ML`,
+getestet in `INT_ML`. Nach `PROD_ML` schreibt erst das offizielle Deployment, nie ein Notebook.
 Der Code entsteht in VS Code mit Claude Code, geleitet durch die Template-Notebooks und Skills.
 
 Kurzanleitung für den Einstieg: [PDF](docs/Kurzanleitung_BIDA_ML_Starter.pdf) oder [HTML](docs/Kurzanleitung_BIDA_ML_Starter.html).
@@ -14,7 +16,7 @@ Kurzanleitung für den Einstieg: [PDF](docs/Kurzanleitung_BIDA_ML_Starter.pdf) o
 
 - Git, VS Code mit den Extensions Python, Jupyter und Claude Code
 - Python-Umgebung: `uv` (empfohlen), `conda` oder ein vorbereiteter WinPython-Ordner
-  (Geschäftsnotebooks ohne Installationsrechte, siehe Setup mit WinPython)
+  (Geschäftsnotebooks ohne Installationsrechte, siehe [Setup mit WinPython](#setup-mit-winpython))
 - Snowflake-User mit Rolle `ML_DEVELOPER` (Berechtigungen siehe `sql/01_ml_developer_grants.sql`)
 
 ## Setup mit uv (empfohlen)
@@ -143,10 +145,10 @@ oder `SF_PASSWORD` (mit MFA).
 
 | Bereich | Objekt | Zweck |
 |---------|--------|-------|
-| Quelle (optional, lesen) | z.B. `PROD_DATALAKE.<QUELLE>.PSA_*`, `*_90` Views | Häufigster Fall: historisierte Rohdaten, rollierendes 90-Tage-Fenster. Andere Quellen (Dateien, andere Systeme) sind genauso möglich |
-| Ziel | `PROD_ML.INFERENCE` | Forecasts und Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
-| Ziel | `PROD_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment |
-| Ziel | `PROD_ML.MONITORING` | Metriken, DQ-Checks, Forecast vs. Actual |
+| Quelle (optional, lesen) | z.B. `{env}_DATALAKE.<QUELLE>.PSA_*`, `*_90` Views | Häufigster Fall: historisierte Rohdaten, rollierendes 90-Tage-Fenster. Andere Quellen (Dateien, andere Systeme) sind genauso möglich |
+| Ziel | `{env}_ML.INFERENCE` | Forecasts und Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
+| Ziel | `{env}_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment |
+| Ziel | `{env}_ML.MONITORING` | Metriken, DQ-Checks, Forecast vs. Actual |
 
 Aus den Notebooks wird ausschliesslich in die ML-Datenbank geschrieben. Den Rückfluss ins DWH und nach
 Power BI übernimmt das DWH-Team.
@@ -160,13 +162,13 @@ und Skills bleiben in allen Umgebungen identisch.
 
 1. Datenquelle festlegen. Bei Snowflake: Tabelle oder View in `configs/config.yaml` unter `tables.training_data`
    eintragen, voll qualifiziert und mit
-   `{env}` statt `DEV_`/`PROD_`, z.B. `"{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"`.
+   `{env}` statt `DEV_`/`INT_`/`PROD_`, z.B. `"{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"`.
    Bei Dateien: nach `data/raw/` legen (nicht in Git) und mit pandas laden.
 2. Eigenes Arbeits-Notebook anlegen, z.B. `notebooks/work_<projekt>.ipynb`.
 3. Passendes Template-Notebook öffnen (`01_` bis `04_`) und Schritt für Schritt durchgehen.
 4. Für jeden Schritt Claude Code nach dem Code fragen, z.B. "Schritt 8 aus 02_forecasting für meine Daten".
    Claude nutzt dafür automatisch die Skills in `.claude/skills/` (forecasting, classification, regression).
-5. Ergebnisse mit `write_to_snowflake()` nach `PROD_ML` schreiben.
+5. Ergebnisse mit `write_to_snowflake()` nach `{env}_ML` schreiben.
 
 | Notebook | Use Case | Inhalt |
 |----------|----------|--------|
@@ -218,7 +220,7 @@ BIDA-ML-Starter ist die ML-Methoden-Bibliothek dazu. Bei einem neuen ML-Projekt 
 | `.claude/skills/<name>/SKILL.md` | `.claude/skills/<name>/SKILL.md` | Methoden-Skill (Frontmatter bereits enthalten) |
 | `notebooks/0X_<name>.ipynb` | `notebooks/` | Anleitungs-Notebook, gehört zum Skill (immer als Paar kopieren) |
 | `src/config.py`, `src/data_loader.py` | `src/` | Config und Snowflake-Verbindung |
-| `configs/config.yaml` | `configs/` | Ziel-Schemas in PROD_ML, Quelltabelle |
+| `configs/config.yaml` | `configs/` | Ziel-Schemas in {env}_ML, Quelltabelle |
 
 Diese Pfade sind die Schnittstelle zum Template und bleiben stabil. Alles andere in diesem Repo
 (`.claude/settings.json`, `.claude/rules/`, `environment.yml`, README) dient nur der Standalone-Nutzung
