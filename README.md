@@ -13,7 +13,8 @@ Kurzanleitung für den Einstieg: [PDF](docs/Kurzanleitung_BIDA_ML_Starter.pdf) o
 ## Voraussetzungen
 
 - Git, VS Code mit den Extensions Python, Jupyter und Claude Code
-- Python-Umgebung: `uv` (empfohlen) oder `conda`
+- Python-Umgebung: `uv` (empfohlen), `conda` oder ein vorbereiteter WinPython-Ordner
+  (Geschäftsnotebooks ohne Installationsrechte, siehe Setup mit WinPython)
 - Snowflake-User mit Rolle `ML_DEVELOPER` (Berechtigungen siehe `sql/01_ml_developer_grants.sql`)
 
 ## Setup mit uv (empfohlen)
@@ -21,7 +22,7 @@ Kurzanleitung für den Einstieg: [PDF](docs/Kurzanleitung_BIDA_ML_Starter.pdf) o
 1. uv installieren (einmalig): `winget install astral-sh.uv` oder über die IT.
 2. Repository klonen und Umgebung erstellen:
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/themanbetterknownasthemachine/BIDA-ML-Starter.git
    cd BIDA-ML-Starter
    uv sync --extra cpu      # Laptop ohne GPU, VM
    uv sync --extra gpu      # Lenovo Notebook mit NVIDIA GPU (CUDA 13.0)
@@ -44,7 +45,7 @@ Kurzanleitung für den Einstieg: [PDF](docs/Kurzanleitung_BIDA_ML_Starter.pdf) o
 ## Setup mit conda
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/themanbetterknownasthemachine/BIDA-ML-Starter.git
 cd BIDA-ML-Starter
 conda env create -f environment.yml
 conda activate bida-ml
@@ -59,6 +60,49 @@ GPU mit conda:
 ```bash
 pip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu130
 ```
+
+## Setup mit WinPython
+
+Für Geschäftsnotebooks, auf denen wegen der Security-Vorgaben nichts installiert werden darf (kein `uv`,
+keine `.venv`, kein `pip install`). Gearbeitet wird mit einem vorbereiteten, portablen WinPython-Ordner,
+z.B. `C:\Users\<user>\WPy64-313150` (Python 3.13).
+
+1. WinPython-Ordner vom WinPython-Verantwortlichen im Team beziehen.
+2. Repository klonen:
+   ```bash
+   git clone https://github.com/themanbetterknownasthemachine/BIDA-ML-Starter.git
+   cd BIDA-ML-Starter
+   ```
+3. In VS Code den Interpreter wählen: `Ctrl+Shift+P`, dann **Python: Select Interpreter** (mit der Extension
+   Python Environments heisst der Befehl **Python: Set Project Environment**), **Enter interpreter path...**
+   und `C:\Users\<user>\WPy64-313150\python\python.exe` eintragen.
+4. Im Notebook oben rechts **Select Kernel**, **Python Environments...** und den WinPython-Interpreter wählen.
+5. Claude Code daran hindern, Pakete zu installieren: `.claude/settings.local.json` anlegen (nicht in Git):
+   ```json
+   {
+     "permissions": {
+       "deny": [
+         "Bash(uv sync*)", "Bash(uv run*)", "Bash(uv lock*)", "Bash(uv add*)", "Bash(uv pip*)",
+         "Bash(uv venv*)", "Bash(uv python*)", "Bash(uv tool*)",
+         "Bash(pip install*)", "Bash(python -m pip install*)", "Bash(py -m pip install*)", "Bash(conda *)"
+       ]
+     }
+   }
+   ```
+   Der Auto-Format-Hook in `.claude/settings.json` läuft nur, wenn eine `.venv` existiert, und ruft deshalb
+   bei WinPython kein `uv` auf.
+6. Credentials erst anlegen, wenn mit Snowflake gearbeitet wird (`cp .env.example .env`, siehe Snowflake-Zugang).
+7. `notebooks/00_environment_check.ipynb` ausführen. Die Snowflake-Zelle darf fehlschlagen, solange die
+   Snowflake-Pakete fehlen.
+
+Unterschiede zum Setup mit uv:
+
+- Python 3.13 und pandas 3 statt Python 3.12 und pandas 2. `pyproject.toml` und `uv.lock` gelten für
+  WinPython nicht; die Versionen bestimmt der WinPython-Ordner.
+- Tests und Linting in der WinPython Command Prompt: `python -m pytest`, `python -m ruff check --fix src tests`,
+  `python -m ruff format src tests`.
+- Kein pre-commit (würde selbst Pakete installieren). Vor jedem Commit Notebook-Outputs entfernen:
+  `python -m nbstripout notebooks/*.ipynb` oder im Notebook **Clear All Outputs**.
 
 ## GPU
 
@@ -184,6 +228,7 @@ und wird nicht kopiert; Hooks, Security-Rules und Verifier kommen aus dem Templa
 
 - `uv run python -m pytest` führt die Tests aus, `uv run ruff check --fix src tests` und `uv run ruff format src tests` formatieren.
 - pre-commit entfernt Notebook-Outputs (nbstripout) und prüft Python-Code (ruff) vor jedem Commit.
+  Mit WinPython ohne `uv`: Befehle siehe Setup mit WinPython.
 - Dependencies nur in `pyproject.toml` ändern, danach `uv lock` und
   `uv export --no-hashes --group dev -o requirements.txt` (hält conda synchron). Beides committen.
 - `random_state=42` als Standard, Konfiguration in `configs/config.yaml`, keine hardcodierten Pfade oder Tabellennamen.

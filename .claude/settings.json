@@ -10,7 +10,7 @@
     }],
     "PostToolUse": [{
       "matcher": "Edit|Write",
-      "hooks": [{ "type": "command", "command": "uv run --no-sync ruff format src tests >/dev/null 2>&1; uv run --no-sync ruff check --fix src tests >/dev/null 2>&1; exit 0" }]
+      "hooks": [{ "type": "command", "command": "[ -d \"$CLAUDE_PROJECT_DIR/.venv\" ] || exit 0; uv run --no-sync ruff format src tests >/dev/null 2>&1; uv run --no-sync ruff check --fix src tests >/dev/null 2>&1; exit 0" }]
     }]
   }
 }

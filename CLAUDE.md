@@ -10,6 +10,7 @@ Pistor BIDA ML Starter: Template für reproduzierbare Machine-Learning-Projekte
 - **Datenquelle ist frei wählbar:** Snowflake (häufig Views in `PROD_DATALAKE`), Dateien (CSV, Excel, Parquet
   in `data/raw/`) oder andere Systeme. **Ziel ist immer Snowflake:** die ML-Datenbank `PROD_ML`.
 - Environment mit `uv` (empfohlen) oder `conda`; beide installieren dieselben Versionen.
+  Auf Geschäftsnotebooks ohne Installationsrechte: vorbereiteter WinPython-Ordner (Python 3.13, siehe unten).
 
 ## Projektstruktur
 
@@ -106,6 +107,25 @@ conda env create -f environment.yml && conda activate bida-ml
 
 - Firmen-Proxy: `pyproject.toml` setzt `system-certs = true`, damit `uv` die Windows-Zertifikate nutzt.
 - Dependencies nur in `pyproject.toml` ändern, nie direkt in `requirements.txt`.
+
+### Setup mit WinPython (keine Installationsrechte)
+
+```bash
+# WinPython Command Prompt (python = C:\Users\<user>\WPy64-313150\python\python.exe)
+python -m pytest
+python -m ruff check --fix src tests && python -m ruff format src tests
+python -m nbstripout notebooks/*.ipynb   # vor jedem Commit, ersetzt pre-commit
+```
+
+- Erkennbar am Kernel: `sys.executable` liegt in einem `WPy64-*`-Ordner, es gibt keine `.venv`.
+- **Nichts installieren:** kein `uv sync`/`uv run`, kein `pip install`, kein pre-commit, keine `.venv` anlegen.
+  Fehlende Pakete dem User melden; er fragt beim WinPython-Verantwortlichen an. `.claude/settings.local.json`
+  sperrt die Befehle zusätzlich (Vorlage im README).
+- Versionen kommen aus dem WinPython-Ordner (Python 3.13, pandas 3), nicht aus `pyproject.toml`/`uv.lock`.
+  Code aus den Skills muss mit pandas 3 laufen.
+- Fehlt ein Paket aus einem Skill (z.B. LightGBM, StatsForecast), bis zur Nachlieferung Alternativen aus der
+  WinPython-Ausstattung anbieten (scikit-learn `HistGradientBoosting*`, statsmodels ETS/SARIMAX) und das
+  im Code-Kommentar vermerken.
 
 ## Sprach-Konventionen
 
