@@ -410,7 +410,7 @@
 
   <section>
     <div class="sec-head"><div class="label">Wozu</div><h2>Sinn und Zweck</h2></div>
-    <p>Ohne Vorlage baut jedes ML-Projekt seine eigene Struktur, eigene Verbindungen und eigene Regeln. Der BIDA ML Starter nimmt das vorweg. Du startest mit einer erprobten Methodik und einer fertigen Infrastruktur und konzentrierst dich auf deine Daten und dein Modell.</p>
+    <p>Ohne Vorlage baut jedes ML-Projekt seine eigene Struktur, eigene Verbindungen und eigene Regeln. Der BIDA ML Starter nimmt das vorweg. Du startest mit einer erprobten Methodik und einer fertigen Infrastruktur und konzentrierst dich auf deine Daten und dein Modell. Im Ordner <code>.claude/</code> sind die Firmen- und Teamrichtlinien hinterlegt, zum Beispiel zu Zugangsdaten, Snowflake und Code-Konventionen. Claude Code hält sie bei jeder Arbeit ein.</p>
     <div class="notes">
       <div class="nt"><h3>Einheitlich</h3><p>Jedes Projekt ist gleich aufgebaut. Wer eines kennt, findet sich in allen zurecht.</p></div>
       <div class="nt"><h3>Reproduzierbar</h3><p>Feste Paketversionen, zentrale Config, <code>RANDOM_STATE = 42</code>. Ein Lauf lässt sich später genau nachstellen.</p></div>
@@ -436,7 +436,7 @@
 
   <section>
     <div class="sec-head"><div class="label">Das Prinzip</div><h2>Anleitung lesen, Code von Claude, Urteil von dir</h2></div>
-    <p>Die Template-Notebooks enthalten bewusst keinen Code, sondern beschreiben, was zu tun ist und warum. Den Code schreibt Claude Code auf Basis der Skills. Du prüfst ihn und entscheidest.</p>
+    <p>Die Template-Notebooks enthalten bewusst keinen Code, sondern beschreiben, was zu tun ist und warum. Den Code schreibst du selbst oder Claude Code auf Basis der Skills. Du prüfst ihn und entscheidest.</p>
     <div class="map">
       <div class="lane">
         <div class="label">Du</div>
@@ -596,7 +596,7 @@
         <div class="where">00 Environment Check<small>Smoke-Test, mit Code</small></div>
         <div>
           <p>Prüft Python, Libraries, PyTorch mit GPU, die Snowflake-Verbindung und die Config. Nach jedem Setup einmal ausführen.</p>
-          <p class="filt"><b>Erwartet:</b> Rolle ML_DEVELOPER, Warehouse CONSUMER, Datenbank DEV_ML.</p>
+          <p class="filt"><b>Mit Snowflake erwartet:</b> Rolle ML_DEVELOPER, Warehouse CONSUMER, Datenbank DEV_ML. Arbeitest du nur mit Dateien, darf die Snowflake-Zelle fehlschlagen.</p>
         </div>
       </div>
       <div class="pg">
@@ -677,6 +677,15 @@
       </div>
     </div>
     <div class="callout" style="margin-top:14px"><p><strong>Rules sind Anweisungen, Hooks sind Sperren.</strong> An CLAUDE.md und die Rules hält sich Claude, weil es sie liest. Die Hooks greifen technisch, egal was Claude entscheidet. Deshalb liegen die harten Verbote, also Zugangsdaten und destruktives SQL, im Hook.</p></div>
+
+    <h3 class="sub-h">Wann du die Prüfer einsetzt</h3>
+    <div class="notes">
+      <div class="nt"><h3>code-reviewer</h3><p>Bevor du committest oder ein Notebook weitergibst, und nach grösseren Änderungen in <code>src/</code>. Er prüft Korrektheit, Konventionen und Risiken, zum Beispiel einen zufälligen statt zeitlichen Split.</p></div>
+      <div class="nt"><h3>security-reviewer</h3><p>Bevor du etwas committest, das Snowflake schreibt, Zugangsdaten berührt oder Einstellungen ändert. Er sucht nach Secrets im Code, unsicherem SQL und Schreibzugriffen ausserhalb von <code>{env}_ML</code>.</p></div>
+    </div>
+    <p style="margin-top:12px">Claude setzt die Prüfer nicht von selbst bei jeder Frage ein. Du rufst sie auf, indem du im Chat darum bittest oder im Eingabefeld <code>@</code> tippst und den Agenten auswählst. <code>/agents</code> zeigt alle Agenten. Beide lesen nur und ändern nichts, sie liefern eine Liste mit Befunden.</p>
+    <div class="prompt"><b>Zum Beispiel:</b> Prüfe meine Änderungen mit dem code-reviewer.</div>
+    <div class="prompt"><b>Zum Beispiel:</b> Lass den security-reviewer über <code>work_ruestmengen.ipynb</code> laufen, bevor ich committe.</div>
   </section>
 
   <section>
@@ -728,50 +737,6 @@
     <p class="tabs-note"><code>ML_ENV</code> in <code>.env</code> ist der einzige Schalter. In Code und Config steht immer <code>{env}</code>, nie <code>DEV_</code> oder <code>PROD_</code>.</p>
   </section>
 
-  <section>
-    <div class="sec-head"><div class="label">Ergebnisse</div><h2>Modelle richtig vergleichen</h2></div>
-    <div class="read">
-      <figure class="chart" style="margin:0">
-        <svg viewBox="0 0 300 190" role="img" aria-label="Beispieldiagramm: MAE von Baseline und vier Modellen, ein grüner Pfeil zeigt minus 37 Prozent vom besten Modell gegenüber der Baseline">
-          <line x1="12" y1="160" x2="270" y2="160" stroke="var(--ink-soft)" stroke-width="1.5"/>
-          <g fill="var(--tile)">
-            <rect x="20" y="62" width="34" height="98"/>
-            <rect x="66" y="94" width="34" height="66"/>
-            <rect x="112" y="92" width="34" height="68"/>
-            <rect x="158" y="78" width="34" height="82"/>
-            <rect x="204" y="98" width="34" height="62"/>
-          </g>
-          <g font-family="Source Sans 3, Segoe UI, sans-serif" font-size="11" fill="var(--ink)" text-anchor="middle">
-            <text x="37" y="56">4.9</text>
-            <text x="83" y="88">3.3</text>
-            <text x="129" y="86">3.4</text>
-            <text x="175" y="72">4.1</text>
-            <text x="221" y="92">3.1</text>
-          </g>
-          <line x1="54" y1="62" x2="258" y2="62" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 2"/>
-          <line x1="238" y1="98" x2="258" y2="98" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 2"/>
-          <line x1="252" y1="62" x2="252" y2="90" stroke="var(--good)" stroke-width="2.5"/>
-          <path d="M246 87 252 98 258 87z" fill="var(--good)"/>
-          <text x="262" y="84" font-family="Source Sans 3, Segoe UI, sans-serif" font-size="11" font-style="italic" fill="var(--ink)">-37%</text>
-          <g font-family="Source Sans 3, Segoe UI, sans-serif" font-size="10" fill="var(--muted)" text-anchor="middle">
-            <text x="37" y="176">Baseline</text>
-            <text x="83" y="176">ARIMA</text>
-            <text x="129" y="176">ETS</text>
-            <text x="175" y="176">LGBM</text>
-            <text x="221" y="176">SARIMAX</text>
-          </g>
-        </svg>
-        <figcaption class="cap">Beispiel: MAE je Modell auf dem Test-Set. Tiefer ist besser. Der Pfeil vergleicht das beste Modell mit der Baseline.</figcaption>
-      </figure>
-      <div class="facts">
-        <div class="fact"><h3>Die Baseline ist Pflicht</h3><p>Zuerst ein einfaches Referenzmodell, zum Beispiel Seasonal Naive oder DummyRegressor. Jedes weitere Modell muss sie schlagen.</p></div>
-        <div class="fact"><h3>Der Split entscheidet</h3><p>Zeitreihen immer <strong>zeitlich</strong> teilen, nie zufällig. Klassifikation immer <strong>stratifiziert</strong>. Sonst sind die Metriken zu optimistisch.</p></div>
-        <div class="fact"><h3>Nur bekannte Features</h3><p>Exogene Features müssen in der Zukunft bekannt sein: Kalender, Feiertage, geplante Aktionen. Lag-Features nie aus der Zukunft.</p></div>
-        <div class="fact"><h3>Eine Zahl reicht nicht</h3><p>Cross-Validation zeigt die Streuung, Fehleranalyse und Residuen zeigen, <em>wo</em> das Modell danebenliegt.</p></div>
-      </div>
-    </div>
-    <div class="callout" style="margin-top:18px"><p><strong>Vorsicht bei MAPE mit Nullwerten.</strong> Enthält die Zielgrösse Nullen oder sehr kleine Werte, explodiert der MAPE oder ist nicht definiert. Dann sMAPE oder MAE verwenden. Das ist kein Modellfehler, sondern eine Eigenschaft der Kennzahl.</p></div>
-  </section>
 
   <section>
     <div class="sec-head"><div class="label">Claude Code</div><h2>So fragst du richtig</h2></div>
@@ -788,32 +753,19 @@
 
   <section>
     <div class="sec-head"><div class="label">Hinweise</div><h2>Gut zu wissen</h2></div>
-    <div class="callout"><p><strong>Tools immer mit <code>python -m</code> starten.</strong> Auf den Pistor-Notebooks sind Launcher-EXEs blockiert, zum Beispiel <code>pytest.exe</code> und <code>pre-commit.exe</code>. Deshalb <code>python -m pytest</code>, mit uv <code>uv run python -m pytest</code>.</p></div>
+    <div class="callout"><p><strong>Tools über Python starten.</strong> Die Firmen-Notebooks blockieren kleine Startprogramme wie <code>pytest.exe</code>. Schreib deshalb <code>python -m</code> vor das Tool: <code>python -m pytest</code> statt <code>pytest</code>. Mit uv heisst es <code>uv run python -m pytest</code>.</p></div>
     <div class="notes">
       <div class="nt"><h3>Zwei Wege zur Umgebung</h3><p>Mit uv entsteht eine <code>.venv</code> im Projekt. Auf Geschäftsnotebooks ohne Installationsrechte nutzt du den vorbereiteten WinPython-Ordner. Code und Notebooks sind in beiden Fällen dieselben.</p></div>
       <div class="nt"><h3>Fehlt ein Paket in WinPython</h3><p>Nicht selbst installieren, sondern beim WinPython-Verantwortlichen anfragen, damit alle denselben Stand haben. Bis dahin schlägt Claude Alternativen aus scikit-learn oder statsmodels vor.</p></div>
       <div class="nt"><h3>GPU</h3><p>Mit uv installiert <code>--extra gpu</code> PyTorch für CUDA 13.0, das braucht einen NVIDIA-Treiber ab Version 580. WinPython bringt PyTorch mit CUDA bereits mit. Der Smoke-Test zeigt <code>CUDA: True</code>.</p></div>
       <div class="nt"><h3>Schlüssel und .env</h3><p>Die <code>.env</code> enthält nur den Pfad. Der private Schlüssel liegt unter <code>~/.snowflake/rsa_key.p8</code> und verlässt den Laptop nie. Den öffentlichen Schlüssel hinterlegt der Snowflake-Admin. Bis dahin hilft <code>SF_AUTHENTICATOR=externalbrowser</code>.</p></div>
-      <div class="nt"><h3>Abhängigkeiten ändern</h3><p>Nur in <code>pyproject.toml</code>. Danach <code>uv lock</code> und <code>uv export --no-hashes --group dev -o requirements.txt</code>, damit conda dieselben Versionen erhält. Beides committen.</p></div>
+      <div class="nt"><h3>Neues Paket mit uv</h3><p>Die Liste aller Pakete steht in <code>pyproject.toml</code>. Brauchst du ein neues, bitte Claude Code, es hinzuzufügen. Claude trägt es dort ein und aktualisiert die Dateien für uv und conda, damit alle dieselben Versionen haben.</p></div>
       <div class="nt"><h3>Was nicht in Git ist</h3><p><code>.env</code>, Schlüssel, <code>data/</code>, <code>models/</code>, <code>.venv/</code> und <code>settings.local.json</code>. Dafür sorgt die <code>.gitignore</code>.</p></div>
       <div class="nt"><h3>Ausgaben vor dem Commit leeren</h3><p>Notebook-Ausgaben können Daten enthalten. Mit uv entfernt sie pre-commit automatisch. Mit WinPython vor dem Commit <b>Clear All Outputs</b> klicken.</p></div>
       <div class="nt"><h3>Vom Experiment zum Projekt</h3><p>Ein echtes Vorhaben mit Spec und Verifier startest du aus dem Agentic Engineering Starter Template. Es kopiert Skills, Notebooks, <code>src/</code> und <code>configs/</code> von hier, Notebook und Skill immer als Paar. Die Pfade deshalb nicht umbenennen.</p></div>
     </div>
   </section>
 
-  <section>
-    <div class="sec-head"><div class="label">Zum Nachschlagen</div><h2>Die wichtigsten Befehle</h2></div>
-    <div class="tbl-wrap">
-      <table>
-        <tr><th><code>uv sync --extra cpu</code></th><td>Umgebung mit uv erstellen oder aktualisieren. Mit GPU: <code>--extra gpu</code>.</td></tr>
-        <tr><th><code>conda env create -f environment.yml</code></th><td>Dieselbe Umgebung mit conda, danach <code>conda activate bida-ml</code>.</td></tr>
-        <tr><th><code>python -m pytest</code></th><td>Tests ausführen. Mit WinPython in der WinPython Command Prompt, mit uv als <code>uv run python -m pytest</code>.</td></tr>
-        <tr><th><code>python -m ruff check --fix src tests</code></th><td>Python-Code prüfen und automatisch korrigieren. Mit uv: <code>uv run ruff check --fix src tests</code>.</td></tr>
-        <tr><th><code>uv run python -m pre_commit install</code></th><td>Einmalig mit uv: Git-Hooks für ruff und nbstripout aktivieren.</td></tr>
-        <tr><th><code>git push</code></th><td>Machst immer du selbst. Claude Code darf committen, aber nicht pushen.</td></tr>
-      </table>
-    </div>
-  </section>
 
   <div class="foot"><span>BIDA ML Starter · Kurzanleitung · BUT</span><span>Stand 20.10.2026</span></div>
 </main>
