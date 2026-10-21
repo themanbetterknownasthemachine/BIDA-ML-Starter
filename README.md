@@ -67,7 +67,8 @@ pip install --force-reinstall torch --index-url https://download.pytorch.org/whl
 
 Für Geschäftsnotebooks, auf denen wegen der Security-Vorgaben nichts installiert werden darf (kein `uv`,
 keine `.venv`, kein `pip install`). Gearbeitet wird mit einem vorbereiteten, portablen WinPython-Ordner,
-z.B. `C:\Users\<user>\WPy64-313150` (Python 3.13).
+bei allen unter `C:\Users\<kürzel>\Documents\WPy64-313150` (Python 3.13). `<kürzel>` ist dein
+Windows-Benutzerkürzel.
 
 1. WinPython-Ordner vom WinPython-Verantwortlichen im Team beziehen.
 2. Repository klonen:
@@ -77,7 +78,7 @@ z.B. `C:\Users\<user>\WPy64-313150` (Python 3.13).
    ```
 3. In VS Code den Interpreter wählen: `Ctrl+Shift+P`, dann **Python: Select Interpreter** (mit der Extension
    Python Environments heisst der Befehl **Python: Set Project Environment**), **Enter interpreter path...**
-   und `C:\Users\<user>\WPy64-313150\python\python.exe` eintragen.
+   und `C:\Users\<kürzel>\Documents\WPy64-313150\python\python.exe` eintragen.
 4. Im Notebook oben rechts **Select Kernel**, **Python Environments...** und den WinPython-Interpreter wählen.
 5. Claude Code daran hindern, Pakete zu installieren: `.claude/settings.local.json` anlegen (nicht in Git):
    ```json

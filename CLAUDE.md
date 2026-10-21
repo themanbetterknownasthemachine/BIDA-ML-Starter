@@ -112,7 +112,7 @@ conda env create -f environment.yml && conda activate bida-ml
 ### Setup mit WinPython (keine Installationsrechte)
 
 ```bash
-# WinPython Command Prompt (python = C:\Users\<user>\WPy64-313150\python\python.exe)
+# WinPython Command Prompt (python = C:\Users\<kürzel>\Documents\WPy64-313150\python\python.exe)
 python -m pytest
 python -m ruff check --fix src tests && python -m ruff format src tests
 python -m nbstripout notebooks/*.ipynb   # vor jedem Commit, ersetzt pre-commit
