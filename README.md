@@ -80,23 +80,15 @@ Windows-Benutzerkürzel.
    Python Environments heisst der Befehl **Python: Set Project Environment**), **Enter interpreter path...**
    und `C:\Users\<kürzel>\Documents\WPy64-313150\python\python.exe` eintragen.
 4. Im Notebook oben rechts **Select Kernel**, **Python Environments...** und den WinPython-Interpreter wählen.
-5. Claude Code daran hindern, Pakete zu installieren: `.claude/settings.local.json` anlegen (nicht in Git):
-   ```json
-   {
-     "permissions": {
-       "deny": [
-         "Bash(uv sync*)", "Bash(uv run*)", "Bash(uv lock*)", "Bash(uv add*)", "Bash(uv pip*)",
-         "Bash(uv venv*)", "Bash(uv python*)", "Bash(uv tool*)",
-         "Bash(pip install*)", "Bash(python -m pip install*)", "Bash(py -m pip install*)", "Bash(conda *)"
-       ]
-     }
-   }
-   ```
-   Der Auto-Format-Hook in `.claude/settings.json` läuft nur, wenn eine `.venv` existiert, und ruft deshalb
-   bei WinPython kein `uv` auf.
-6. Credentials erst anlegen, wenn mit Snowflake gearbeitet wird (`cp .env.example .env`, siehe Snowflake-Zugang).
-7. `notebooks/00_environment_check.ipynb` ausführen. Die Snowflake-Zelle darf fehlschlagen, solange die
+5. Credentials erst anlegen, wenn mit Snowflake gearbeitet wird (`cp .env.example .env`, siehe Snowflake-Zugang).
+6. `notebooks/00_environment_check.ipynb` ausführen. Die Snowflake-Zelle darf fehlschlagen, solange die
    Snowflake-Pakete fehlen.
+
+Claude Code kann im WinPython-Setup keine Pakete installieren, ohne dass du etwas einrichten musst: Der Hook
+`.claude/hooks/protect-files.sh` sperrt `uv`, `pip install` und `conda`, solange es keine `.venv` gibt. Auch
+der Auto-Format-Hook in `.claude/settings.json` läuft nur mit `.venv` und ruft deshalb bei WinPython kein `uv`
+auf. Eine `.claude/settings.local.json` mit Sperren aus einer früheren Anleitung schadet nicht, ist aber nicht
+mehr nötig.
 
 Unterschiede zum Setup mit uv:
 

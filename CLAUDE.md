@@ -120,8 +120,8 @@ python -m nbstripout notebooks/*.ipynb   # vor jedem Commit, ersetzt pre-commit
 
 - Erkennbar am Kernel: `sys.executable` liegt in einem `WPy64-*`-Ordner, es gibt keine `.venv`.
 - **Nichts installieren:** kein `uv sync`/`uv run`, kein `pip install`, kein pre-commit, keine `.venv` anlegen.
-  Fehlende Pakete dem User melden; er fragt beim WinPython-Verantwortlichen an. `.claude/settings.local.json`
-  sperrt die Befehle zusätzlich (Vorlage im README).
+  Fehlende Pakete dem User melden; er fragt beim WinPython-Verantwortlichen an. Der Hook `protect-files.sh`
+  sperrt diese Befehle zusätzlich, solange es keine `.venv` gibt.
 - Versionen kommen aus dem WinPython-Ordner (Python 3.13, pandas 3), nicht aus `pyproject.toml`/`uv.lock`.
   Code aus den Skills muss mit pandas 3 laufen.
 - Fehlt ein Paket aus einem Skill (z.B. LightGBM, StatsForecast), bis zur Nachlieferung Alternativen aus der

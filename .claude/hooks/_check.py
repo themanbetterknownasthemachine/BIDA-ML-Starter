@@ -11,12 +11,19 @@ mit Exit 2. Praezisiert, um False Positives zu vermeiden:
 - MCP-Tools: geprueft werden Tool-Name und Input. DROP/DELETE/TRUNCATE zaehlen nur
   als eigenes Wort oder Namensbestandteil (drop_object, truncate_stage), nicht als
   Wortanfang (dropdown, deleted).
+- Paketinstallationen (uv, pip install, conda) werden bei Bash geblockt, solange das
+  Projekt keine .venv hat. Daran erkennt der Starter das WinPython-Setup ohne
+  Installationsrechte; eine eigene settings.local.json braucht es dafuer nicht.
 - Fail-closed: ein nicht lesbares Payload wird geblockt, nicht durchgelassen.
 """
 
 import json
 import re
 import sys
+from pathlib import Path
+
+# _check.py liegt in <Projekt>/.claude/hooks/
+PROJECT_DIR = Path(__file__).resolve().parents[2]
 
 # .env / .env.local usw. als Pfad-Token, aber nicht .env.example (keine Secrets)
 SECRET_FILE = re.compile(
@@ -41,6 +48,31 @@ DESTRUCTIVE_SQL = re.compile(r"\b(DROP|DELETE|TRUNCATE)", re.IGNORECASE)
 # drop_object, truncate_stage, "DELETE FROM" -> Treffer; dropdown, deleted -> kein Treffer.
 MCP_DESTRUCTIVE = re.compile(r"(?<![a-z0-9])(DROP|DELETE|TRUNCATE)(?![a-z])", re.IGNORECASE)
 
+# Paketinstallationen, nur als eigener Befehl: am Anfang oder nach ; & | ( ` $( bzw.
+# Zeilenumbruch, optional mit Umgebungsvariablen (X=1) und einem Pfad zum Programm davor.
+# "git commit -m '... uv sync ...'" oder "grep 'pip install'" treffen deshalb nicht.
+_CMD_START = (
+    r"(?:^|[;&|(`\n]|\$\()\s*"
+    r"(?:\w+=\S*\s+)*"
+    r"(?:\"[^\"]*[/\\]|'[^']*[/\\]|[^\s;&|()\"']*[/\\])?"
+)
+INSTALL_CMD = re.compile(
+    _CMD_START + r"(?:"
+    r"uv(?:\.exe)?\s+(?:sync|run|lock|add|remove|pip|venv|python|tool)\b"
+    r"|uvx(?:\.exe)?\b"
+    r"|pip3?(?:\.exe)?\s+(?:install|uninstall)\b"
+    r"|pipx(?:\.exe)?\s+(?:install|run)\b"
+    r"|(?:python3?|py)(?:\.exe)?[\"']?\s[^;&|\n]*?-m\s+pip\s+(?:install|uninstall)\b"
+    r"|conda(?:\.exe)?\b"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def winpython_setup() -> bool:
+    """WinPython-Setup: Im Projekt liegt keine .venv (dasselbe Kriterium wie beim Formatieren)."""
+    return not (PROJECT_DIR / ".venv").is_dir()
+
 
 def check(tool: str, tool_input: dict) -> str | None:
     if tool in ("Read", "Edit", "Write", "NotebookEdit"):
@@ -55,6 +87,8 @@ def check(tool: str, tool_input: dict) -> str | None:
             return "Zugriff auf Credential-Dateien"
         if SQL_RUNNER.search(cmd) and DESTRUCTIVE_SQL.search(cmd):
             return "destruktives SQL (DROP/DELETE/TRUNCATE) via CLI"
+        if INSTALL_CMD.search(cmd) and winpython_setup():
+            return "Paketinstallation im WinPython-Setup (ohne .venv)"
         return None
 
     if tool.startswith("mcp__"):

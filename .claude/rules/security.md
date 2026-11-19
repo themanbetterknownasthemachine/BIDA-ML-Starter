@@ -19,7 +19,10 @@ These rules are context. The hard blocks are enforced in two layers:
      `sqlcmd`, `psql`, `sqlite3`);
    - MCP tools whose name or input contains `DROP`/`DELETE`/`TRUNCATE` as a word or
      name part (`drop_object`, `DELETE FROM`), but not as a word prefix
-     (`dropdown`, `deleted`).
+     (`dropdown`, `deleted`);
+   - package installs in Bash (`uv sync`/`uv run`/..., `uvx`, `pip install`,
+     `python -m pip install`, `pipx`, `conda`) as long as the project has no `.venv`
+     (WinPython setup without install rights). No `settings.local.json` is needed for this.
    The hook needs a Python interpreter: it takes the first real Python on PATH (`python3`,
    `python`, `py`; the Windows Store placeholder does not count). Without one it falls back to the
    team WinPython under `%USERPROFILE%\Documents\WPy64-*` (or `%USERPROFILE%\WPy64-*`),
