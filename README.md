@@ -76,9 +76,15 @@ Windows-Benutzerkürzel.
    git clone https://github.com/themanbetterknownasthemachine/BIDA-ML-Starter.git
    cd BIDA-ML-Starter
    ```
-3. In VS Code den Interpreter wählen: `Ctrl+Shift+P`, dann **Python: Select Interpreter** (mit der Extension
-   Python Environments heisst der Befehl **Python: Set Project Environment**), **Enter interpreter path...**
-   und `C:\Users\<kürzel>\Documents\WPy64-313150\python\python.exe` eintragen.
+3. VS Code einmalig auf WinPython einstellen, dann gilt es für alle Projekte: `Ctrl+,` (Einstellungen), Reiter
+   **User**, nach `defaultInterpreterPath` suchen und bei **Python: Default Interpreter Path** eintragen:
+   ```
+   ${env:USERPROFILE}\Documents\WPy64-313150\python\python.exe
+   ```
+   `${env:USERPROFILE}` steht für den eigenen Benutzerordner, der Wert ist also für alle gleich. Er gilt in
+   jedem Projekt, in dem noch kein anderer Interpreter gewählt ist. Bei einem neuen WinPython-Stand mit anderem
+   Ordnernamen den Wert anpassen. Nur für ein einzelnes Projekt geht es auch so: `Ctrl+Shift+P`,
+   **Python: Select Interpreter**, **Enter interpreter path...** und den Pfad eintragen.
 4. Im Notebook oben rechts **Select Kernel**, **Python Environments...** und den WinPython-Interpreter wählen.
 5. Credentials erst anlegen, wenn mit Snowflake gearbeitet wird (`cp .env.example .env`, siehe Snowflake-Zugang).
 6. `notebooks/00_environment_check.ipynb` ausführen. Die Snowflake-Zelle darf fehlschlagen, solange die
