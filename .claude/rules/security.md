@@ -20,6 +20,10 @@ These rules are context. The hard blocks are enforced in two layers:
    - MCP tools whose name or input contains `DROP`/`DELETE`/`TRUNCATE` as a word or
      name part (`drop_object`, `DELETE FROM`), but not as a word prefix
      (`dropdown`, `deleted`).
+   The hook needs a Python interpreter: it takes the first real Python on PATH (`python3`,
+   `python`, `py`; the Windows Store placeholder does not count). Without one it falls back to the
+   team WinPython under `%USERPROFILE%\Documents\WPy64-*` (or `%USERPROFILE%\WPy64-*`),
+   so laptops without a Python installation work after a `git pull`.
    The hook is fail-closed: no Python interpreter, an unreadable payload, or a
    crashed check → block.
 

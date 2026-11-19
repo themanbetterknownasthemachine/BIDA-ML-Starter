@@ -106,6 +106,9 @@ Unterschiede zum Setup mit uv:
   `python -m ruff format src tests`.
 - Kein pre-commit (würde selbst Pakete installieren). Vor jedem Commit Notebook-Outputs entfernen:
   `python -m nbstripout notebooks/*.ipynb` oder im Notebook **Clear All Outputs**.
+- Der Sicherheits-Hook von Claude Code (`.claude/hooks/protect-files.sh`) braucht ein Python. Liegt keines
+  im PATH, nimmt er das WinPython unter `C:\Users\<kürzel>\Documents\WPy64-*`. Findet er gar keines,
+  sperrt er Claude Code (fail-closed).
 
 ## GPU
 
