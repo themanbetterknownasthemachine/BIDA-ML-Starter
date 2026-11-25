@@ -57,9 +57,10 @@ BIDA-ML-Starter/
 | Ziel | `{env}_ML.MONITORING` | Metriken und DQ-Checks (`MODEL_EVALUATION_LOG`, `DQ_CHECK_LOG`, `V_FORECAST_VS_ACTUAL`) |
 
 - Rolle `ML_DEVELOPER`, Warehouse `CONSUMER` (Defaults in `configs/config.yaml` und `.env.example`).
-- **Umgebungen (DEV / INT / PROD):** Einziger Schalter ist `ML_ENV` in `.env`. `configs/config.yaml`
-  enthält Vorlagen mit `{env}` (`{env}_ML`, `{env}_DATALAKE...`), die `load_config()` auflöst.
-  Ablauf: entwickelt wird in `DEV`, getestet in `INT`. Nach `PROD` schreibt erst das offizielle
+- **Umgebungen (DEV / INT / PROD):** Zwei Schalter in `.env`. `ML_ENV` ist das Ziel (`{env}_ML`).
+  `SOURCE_ENV` ist optional und bestimmt die Quelle (`{source_env}_DATALAKE...`, Default = `ML_ENV`).
+  `configs/config.yaml` enthält Vorlagen mit beiden Platzhaltern, die `load_config()` auflöst.
+  Typisch auf Laptops: `ML_ENV=DEV`, `SOURCE_ENV=PROD`. Rechte: `sql/01_ml_developer_grants.sql`. Ablauf: entwickelt wird in `DEV`, getestet in `INT`. Nach `PROD` schreibt erst das offizielle
   Deployment, nie ein Notebook. Auf Laptops steht `ML_ENV=DEV` (heute existiert nur `DEV_ML`).
   Nie `DEV_ML`, `INT_ML` oder `PROD_ML` fest in Code, Config oder Notebooks schreiben; `{env}_ML` in dieser
   Datei meint "die ML-Datenbank der jeweiligen Umgebung".
@@ -138,7 +139,7 @@ python -m nbstripout notebooks/*.ipynb   # vor jedem Commit, ersetzt pre-commit
 ## Workflow-Regeln
 
 - Daten laden über `src.data_loader` (`load_query`, `load_table`, `load_timeseries`); Tabellennamen aus `configs/config.yaml`
-  (mit `{env}`-Platzhalter, z.B. `"{env}_DATALAKE.MSACCESS.PSA_..._90"`).
+  (mit `{source_env}`-Platzhalter, z.B. `"{source_env}_DATALAKE.MSACCESS.PSA_..._90"`).
 - Ergebnisse mit `write_to_snowflake(df, "TABELLE", schema=...)` nach `{env}_ML` schreiben (append, nicht overwrite),
   immer mit `run_id`, Modellname, Version und Zeitstempel.
 - Trainierte Modelle unter `models/<name>_v<n>_<datum>/` speichern (nicht in Git).

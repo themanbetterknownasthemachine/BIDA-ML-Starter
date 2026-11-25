@@ -124,12 +124,13 @@ Credentials stehen in `.env` (nicht in Git). Vorlage: `.env.example`.
 SF_ACCOUNT=pistor.eu-central-1
 SF_USER=dein_user
 ML_ENV=DEV
+SOURCE_ENV=PROD          # optional: Quellen aus PROD lesen
 SF_PRIVATE_KEY_PATH=~/.snowflake/rsa_key.p8
 ```
 
 Rolle (`ML_DEVELOPER`), Warehouse (`CONSUMER`), Datenbank (`{env}_ML`) und Schema kommen aus
 `configs/config.yaml`; `SF_ROLE`, `SF_WAREHOUSE`, `SF_SCHEMA` in `.env` sind nur
-für Ausnahmen. Die Datenbank ist bewusst nicht überschreibbar, `ML_ENV` bleibt der einzige Schalter.
+für Ausnahmen. Die Datenbank ist bewusst nicht überschreibbar, nur `ML_ENV` bestimmt das Schreibziel.
 
 Empfohlen ist Key-Pair-Authentifizierung (kein MFA-Prompt bei jeder Verbindung):
 
@@ -147,7 +148,7 @@ oder `SF_PASSWORD` (mit MFA).
 
 | Bereich | Objekt | Zweck |
 |---------|--------|-------|
-| Quelle (optional, lesen) | z.B. `{env}_DATALAKE.<QUELLE>.PSA_*`, `*_90` Views | Häufigster Fall: historisierte Rohdaten, rollierendes 90-Tage-Fenster. Andere Quellen (Dateien, andere Systeme) sind genauso möglich |
+| Quelle (optional, lesen) | z.B. `{source_env}_DATALAKE.<QUELLE>.PSA_*`, `*_90` Views | Häufigster Fall: historisierte Rohdaten, rollierendes 90-Tage-Fenster. Andere Quellen (Dateien, andere Systeme) sind genauso möglich |
 | Ziel | `{env}_ML.INFERENCE` | Forecasts und Predictions je Lauf (z.B. `FORECAST_SNAPSHOT`) |
 | Ziel | `{env}_ML.REGISTRY` | Modell-Läufe, Parameter, Deployment |
 | Ziel | `{env}_ML.MONITORING` | Metriken, DQ-Checks, Forecast vs. Actual |
@@ -155,16 +156,21 @@ oder `SF_PASSWORD` (mit MFA).
 Aus den Notebooks wird ausschliesslich in die ML-Datenbank geschrieben. Den Rückfluss ins DWH und nach
 Power BI übernimmt das DWH-Team.
 
-Umgebungen: `ML_ENV` in `.env` (`DEV`, `INT` oder `PROD`) ist der einzige Schalter. `configs/config.yaml`
-verwendet Vorlagen wie `"{env}_ML"` und `"{env}_DATALAKE.MSACCESS.PSA_..._90"`, die beim Laden aufgelöst
-werden. Auf Laptops steht `ML_ENV=DEV`; bis zum Deployment existiert ohnehin nur `DEV_ML`. Code, Config
-und Skills bleiben in allen Umgebungen identisch.
+Umgebungen: zwei Schalter in `.env`, Werte `DEV`, `INT` oder `PROD`.
+
+- `ML_ENV` ist das Ziel: die ML-Datenbank `"{env}_ML"`, in die geschrieben wird. Auf Laptops immer `DEV`.
+- `SOURCE_ENV` ist optional und bestimmt die Quelle zum Lesen, z.B.
+  `"{source_env}_DATALAKE.MSACCESS.PSA_..._90"`. Ohne Eintrag gilt derselbe Wert wie `ML_ENV`.
+
+Typisch ist `ML_ENV=DEV` mit `SOURCE_ENV=PROD`: produktive Daten lesen, Ergebnisse nach `DEV_ML` schreiben.
+Nach `INT_ML` und `PROD_ML` schreibt nur das offizielle Deployment. Die Berechtigungen dazu stehen in
+`sql/01_ml_developer_grants.sql`. Code, Config und Skills bleiben in allen Umgebungen identisch.
 
 ## Arbeiten mit dem Template
 
 1. Datenquelle festlegen. Bei Snowflake: Tabelle oder View in `configs/config.yaml` unter `tables.training_data`
    eintragen, voll qualifiziert und mit
-   `{env}` statt `DEV_`/`INT_`/`PROD_`, z.B. `"{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"`.
+   `{source_env}` statt `DEV_`/`INT_`/`PROD_`, z.B. `"{source_env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"`.
    Bei Dateien: nach `data/raw/` legen (nicht in Git) und mit pandas laden.
 2. Eigenes Arbeits-Notebook anlegen, z.B. `notebooks/work_<projekt>.ipynb`.
 3. Passendes Template-Notebook öffnen (`01_` bis `04_`) und Schritt für Schritt durchgehen.

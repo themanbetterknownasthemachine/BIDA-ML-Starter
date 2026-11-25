@@ -1,8 +1,8 @@
 """Snowflake data loader.
 
 Reads credentials from .env and opens one Snowpark session per Python process.
-The target environment (DEV_ML / PROD_ML, DEV_DATALAKE / PROD_DATALAKE) comes from
-ML_ENV in .env via src.config (see configs/config.yaml).
+The target ML database ({env}_ML) comes from ML_ENV in .env, source tables
+({source_env}_DATALAKE...) from SOURCE_ENV (default: ML_ENV), via src.config.
 Set exactly one auth method in .env:
     1. Key-Pair:         SF_PRIVATE_KEY_PATH  (recommended, no MFA prompt)
     2. External Browser: SF_AUTHENTICATOR=externalbrowser  (SSO)
@@ -46,7 +46,7 @@ def _connection_params() -> dict:
 
     Role, warehouse, database and schema come from config.yaml (resolved for ML_ENV).
     SF_ROLE / SF_WAREHOUSE / SF_SCHEMA in .env override them if set; the database is
-    deliberately not overridable so that ML_ENV stays the only environment switch.
+    deliberately not overridable so that only ML_ENV decides where results are written.
     """
     from src.config import load_config
 

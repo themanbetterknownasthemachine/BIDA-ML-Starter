@@ -1,9 +1,15 @@
 """Configuration loader for BIDA ML Starter.
 
-The target environment (DEV / INT / PROD) is a single switch: ML_ENV in .env.
-config.yaml contains templates such as "{env}_ML" or "{env}_DATALAKE.<SCHEMA>.<VIEW>";
-load_config() replaces "{env}" with the current environment so notebooks and skills
-never hardcode DEV_ML / PROD_ML.
+Two environment switches in .env (values DEV / INT / PROD):
+
+- ML_ENV: target environment. "{env}" in config.yaml resolves to it, e.g. "{env}_ML".
+  Notebooks only ever write to this ML database.
+- SOURCE_ENV (optional): source environment for reading. "{source_env}" in config.yaml
+  resolves to it, e.g. "{source_env}_DATALAKE.<SCHEMA>.<VIEW>". Default: same as ML_ENV.
+  Typical laptop setup: ML_ENV=DEV, SOURCE_ENV=PROD (read production data, write to DEV_ML).
+
+load_config() replaces both placeholders so notebooks and skills never hardcode
+DEV_ML / PROD_ML or DEV_DATALAKE / PROD_DATALAKE.
 """
 
 import os
@@ -16,13 +22,24 @@ from dotenv import load_dotenv
 ENVIRONMENTS = ("DEV", "INT", "PROD")
 
 
+def _validate(name: str, value: str) -> str:
+    value = value.upper()
+    if value not in ENVIRONMENTS:
+        raise ValueError(f"{name} must be one of {ENVIRONMENTS}, got '{value}'")
+    return value
+
+
 def get_env() -> str:
-    """Return the current environment from ML_ENV in .env (default: DEV)."""
+    """Return the target environment from ML_ENV in .env (default: DEV)."""
     load_dotenv()
-    env = os.getenv("ML_ENV", "DEV").upper()
-    if env not in ENVIRONMENTS:
-        raise ValueError(f"ML_ENV must be one of {ENVIRONMENTS}, got '{env}'")
-    return env
+    return _validate("ML_ENV", os.getenv("ML_ENV", "DEV"))
+
+
+def get_source_env() -> str:
+    """Return the source environment from SOURCE_ENV in .env (default: ML_ENV)."""
+    load_dotenv()
+    value = os.getenv("SOURCE_ENV", "").strip()
+    return _validate("SOURCE_ENV", value) if value else get_env()
 
 
 def _find_config_path() -> Path:
@@ -36,33 +53,46 @@ def _find_config_path() -> Path:
     raise FileNotFoundError("configs/config.yaml not found")
 
 
-def _resolve(value: Any, env: str) -> Any:
-    """Replace the {env} placeholder in all strings of a nested config structure."""
+def _resolve(value: Any, env: str, source_env: str) -> Any:
+    """Replace {source_env} and {env} in all strings of a nested config structure."""
     if isinstance(value, str):
-        return value.replace("{env}", env)
+        return value.replace("{source_env}", source_env).replace("{env}", env)
     if isinstance(value, dict):
-        return {k: _resolve(v, env) for k, v in value.items()}
+        return {k: _resolve(v, env, source_env) for k, v in value.items()}
     if isinstance(value, list):
-        return [_resolve(v, env) for v in value]
+        return [_resolve(v, env, source_env) for v in value]
     return value
 
 
-def load_config(path: str | Path | None = None, env: str | None = None) -> dict[str, Any]:
-    """Load the YAML config with {env} placeholders resolved.
+def load_config(
+    path: str | Path | None = None,
+    env: str | None = None,
+    source_env: str | None = None,
+) -> dict[str, Any]:
+    """Load the YAML config with {env} and {source_env} placeholders resolved.
 
     Args:
         path: Optional explicit path. Auto-detected if None.
-        env: Environment override (DEV / INT / PROD). Default: ML_ENV from .env.
+        env: Target environment override (DEV / INT / PROD). Default: ML_ENV from .env.
+        source_env: Source environment override. Default: SOURCE_ENV from .env,
+            falling back to the target environment.
 
     Returns:
-        Parsed config dictionary; cfg["env"] holds the resolved environment.
+        Parsed config dictionary; cfg["env"] and cfg["source_env"] hold the resolved values.
     """
     config_path = Path(path) if path else _find_config_path()
     with open(config_path, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
-    env = (env or get_env()).upper()
-    cfg = _resolve(cfg, env)
+    env = _validate("env", env) if env else get_env()
+    if source_env:
+        source_env = _validate("source_env", source_env)
+    elif os.getenv("SOURCE_ENV", "").strip():
+        source_env = get_source_env()
+    else:
+        source_env = env
+    cfg = _resolve(cfg, env, source_env)
     cfg["env"] = env
+    cfg["source_env"] = source_env
     return cfg
 
 

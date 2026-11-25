@@ -3,9 +3,11 @@
 # =============================================================================
 # Beim Projektstart nur das Nötigste ausfüllen (project.name, tables).
 #
-# Umgebung: "{env}" wird beim Laden durch ML_ENV aus .env ersetzt (DEV, INT oder
-# PROD). Damit zeigt dieselbe Config je nach Umgebung auf DEV_ML / DEV_DATALAKE
-# oder PROD_ML / PROD_DATALAKE. Nie DEV_ oder PROD_ fest eintragen.
+# Umgebungen (Werte DEV, INT oder PROD, gesetzt in .env):
+#   "{env}"        -> ML_ENV, das Ziel: die ML-Datenbank, in die geschrieben wird.
+#   "{source_env}" -> SOURCE_ENV, die Quelle zum Lesen. Ohne Eintrag gleich wie ML_ENV.
+# Typisch auf Laptops: ML_ENV=DEV, SOURCE_ENV=PROD (produktive Daten lesen, nach DEV_ML
+# schreiben). Nie DEV_, INT_ oder PROD_ fest eintragen.
 # =============================================================================
 
 project:
@@ -22,12 +24,12 @@ snowflake:
     registry: "REGISTRY"         # Modell-Läufe, Parameter, Deployment
     monitoring: "MONITORING"     # Metriken, DQ-Checks, Forecast vs. Actual
 
-# Optional: Quelltabellen oder Views in Snowflake, voll qualifiziert mit {env}. Die Datenquelle
+# Optional: Quelltabellen oder Views in Snowflake, voll qualifiziert mit {source_env}. Die Datenquelle
 # ist frei (auch CSV, Excel, Parquet oder andere Systeme); dann bleibt dieser Block leer.
 # Häufigster Fall: Rohdaten liegen im
 # DATALAKE; die *_90 Views liefern ein rollierendes 90-Tage-Fenster.
 # Beispiel Rüstmengen-Forecast:
-#   training_data: "{env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"
-#   actuals:       "{env}_DATALAKE.WAMAS4.PSA_W4_LOGISTIK_RUESTMENGEN_90"
+#   training_data: "{source_env}_DATALAKE.MSACCESS.PSA_CSV_LOGISTIK_RUESTMENGEN_90"
+#   actuals:       "{source_env}_DATALAKE.WAMAS4.PSA_W4_LOGISTIK_RUESTMENGEN_90"
 tables:
   training_data: ""

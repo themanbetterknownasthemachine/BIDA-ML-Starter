@@ -27,6 +27,38 @@ def test_env_override_and_validation(monkeypatch):
         get_env()
 
 
+def test_source_env_defaults_to_ml_env(tmp_path, monkeypatch):
+    """Without SOURCE_ENV, {source_env} resolves to the same value as ML_ENV."""
+    from src.config import load_config
+
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text('db: "{env}_ML"\nsrc: "{source_env}_DATALAKE.S.V"\n', encoding="utf-8")
+    monkeypatch.setenv("ML_ENV", "DEV")
+    monkeypatch.setenv("SOURCE_ENV", "")
+    cfg = load_config(cfg_file)
+    assert cfg["db"] == "DEV_ML"
+    assert cfg["src"] == "DEV_DATALAKE.S.V"
+    assert cfg["source_env"] == "DEV"
+
+
+def test_source_env_separate_from_target(tmp_path, monkeypatch):
+    """SOURCE_ENV=PROD reads from PROD while the target stays DEV_ML."""
+    from src.config import get_source_env, load_config
+
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text('db: "{env}_ML"\nsrc: "{source_env}_DATALAKE.S.V"\n', encoding="utf-8")
+    monkeypatch.setenv("ML_ENV", "DEV")
+    monkeypatch.setenv("SOURCE_ENV", "prod")
+    cfg = load_config(cfg_file)
+    assert cfg["db"] == "DEV_ML"
+    assert cfg["src"] == "PROD_DATALAKE.S.V"
+    assert load_config(cfg_file, source_env="INT")["src"] == "INT_DATALAKE.S.V"
+
+    monkeypatch.setenv("SOURCE_ENV", "TEST")
+    with pytest.raises(ValueError):
+        get_source_env()
+
+
 def test_random_state():
     """RANDOM_STATE should be 42."""
     from src.config import RANDOM_STATE
